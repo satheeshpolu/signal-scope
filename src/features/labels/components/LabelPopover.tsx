@@ -1,23 +1,6 @@
-import { useRef, useEffect, type FormEvent } from 'react';
-import { LabelCategory } from '@/features/labels/types';
-import type { Label } from '@/features/labels/types';
+import { useRef, useEffect, type SubmitEvent } from 'react';
+import { LabelCategory, type LabelPopoverProps } from '@/features/labels/types';
 import { Button } from '@/components/ui/Button';
-
-interface PopoverPosition {
-  x: number;
-  y: number;
-}
-
-interface LabelPopoverProps {
-  position: PopoverPosition;
-  initialFrom: number;
-  initialTo: number;
-  symbol: string;
-  /** Provide when editing an existing label */
-  editing?: Label;
-  onSave: (data: Omit<Label, 'id'>) => void;
-  onClose: () => void;
-}
 
 export function LabelPopover({
   position,
@@ -41,7 +24,7 @@ export function LabelPopover({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const category = fd.get('category') as LabelCategory;

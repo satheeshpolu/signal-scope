@@ -12,11 +12,13 @@ import { CanvasRenderer } from 'echarts/renderers';
 import type { EChartsOption } from 'echarts';
 import type { ECharts as EChartsType } from 'echarts/core';
 import type { Sample } from '@/features/samples/api/types';
-import type { Label } from '@/features/labels/types';
-import { SignalKind } from '@/features/signals/api/types';
-import type { SignalKind as SignalKindType } from '@/features/signals/api/types';
-import type { Theme } from '@/lib/theme/ThemeContext';
-import { CATEGORY_COLOR } from '@/features/labels/types';
+import { type Label, CATEGORY_COLOR } from '@/features/labels/types';
+import { type SignalKind as SignalKindType, SignalKind } from '@/features/signals/api/types';
+import {
+  type DragState,
+  type PopoverState,
+  type TimeseriesChartProps,
+} from '@/features/samples/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
 
@@ -30,31 +32,6 @@ echarts.use([
   AxisPointerComponent,
   CanvasRenderer,
 ]);
-
-interface DragState {
-  active: boolean;
-  startX: number; // pixel
-  startTime: number; // data ms
-  endTime: number; // data ms
-}
-
-interface PopoverState {
-  visible: boolean;
-  x: number; // px within container
-  y: number;
-  from: number;
-  to: number;
-}
-
-interface TimeseriesChartProps {
-  samples: Sample[];
-  labels: Label[];
-  signal: SignalKindType;
-  symbol: string;
-  theme: Theme;
-  /** Called when the user zooms, so parent can update URL */
-  onZoom?: (from: number, to: number) => void;
-}
 
 function getCssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -322,7 +299,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
   }, [samples, labels, signal]);
 
   const handleSave = useCallback(
-    (data: Omit<import('@/features/labels/types').Label, 'id'>) => {
+    (data: Omit<Label, 'id'>) => {
       add(data);
       setPopover((p) => ({ ...p, visible: false }));
     },

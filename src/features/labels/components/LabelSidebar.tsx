@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
-import { LabelCategory, CATEGORY_COLOR } from '@/features/labels/types';
-import type { Label } from '@/features/labels/types';
+import {
+  LabelCategory,
+  CATEGORY_COLOR,
+  type Label,
+  type LabelSidebarProps,
+} from '@/features/labels/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { Button } from '@/components/ui/Button';
-
-interface LabelSidebarProps {
-  symbol: string;
-}
 
 function formatMs(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, {
