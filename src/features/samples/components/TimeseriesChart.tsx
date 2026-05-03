@@ -16,8 +16,10 @@ import { type Label, CATEGORY_COLOR } from '@/features/labels/types';
 import { type SignalKind as SignalKindType, SignalKind } from '@/features/signals/api/types';
 import {
   type DragState,
+  type MarkBound,
   type PopoverState,
   type TimeseriesChartProps,
+  type ZrEvent,
 } from '@/features/samples/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
@@ -49,17 +51,6 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
 
   // ECharts MarkArea2DDataItemOption requires an exact [start, end] tuple.
   // Using .map() + explicit return type forces TypeScript to see 2-tuples.
-  type MarkBound = {
-    xAxis: number;
-    itemStyle?: { color: string; opacity: number };
-    label?: {
-      show: boolean;
-      position: 'insideTopLeft';
-      formatter: string;
-      color: string;
-      fontSize: number;
-    };
-  };
   const markAreaData: [MarkBound, MarkBound][] = labels.map((label) => {
     const bandColor = resolveCssVar(CATEGORY_COLOR[label.category]);
     return [
@@ -86,7 +77,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
   const chartAxisLabelBg = getCssVar('--color-surface-600');
   const chartAxisLabelText = getCssVar('--color-text-secondary');
   const chartTooltipBg = getCssVar('--color-surface-600');
-  // const chartTooltipBorder = getCssVar("--color-text-secondary");
+
   return {
     backgroundColor: 'transparent',
     grid: { left: 60, right: 16, top: 16, bottom: 80 },
@@ -228,12 +219,6 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
 
     // ZRender mouse events for label drag
     const zr = chart.getZr();
-
-    interface ZrEvent {
-      offsetX: number;
-      offsetY: number;
-      which?: number;
-    }
 
     zr.on('mousedown', (e: unknown) => {
       const ev = e as ZrEvent;

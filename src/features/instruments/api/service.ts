@@ -1,29 +1,7 @@
 import { httpClient } from '@/lib/http/HttpClient';
 import type { IInstrumentsService } from '@/features/instruments/api/interface';
 import type { Instrument, TickerRaw } from '@/features/instruments/api/types';
-
-const CURATED_SYMBOLS: readonly string[] = [
-  'BTCUSDT',
-  'ETHUSDT',
-  'SOLUSDT',
-  'BNBUSDT',
-  'XRPUSDT',
-  'DOGEUSDT',
-  'ADAUSDT',
-  'AVAXUSDT',
-  'DOTUSDT',
-  'LINKUSDT',
-  'MATICUSDT',
-  'LTCUSDT',
-  'UNIUSDT',
-  'ATOMUSDT',
-  'XLMUSDT',
-  'VETUSDT',
-  'TRXUSDT',
-  'FILUSDT',
-  'AAVEUSDT',
-  'SHIBUSDT',
-];
+import { CURATED_SYMBOLS } from '@/features/instruments/constants';
 
 function adaptTicker(raw: TickerRaw): Instrument {
   return {

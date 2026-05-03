@@ -26,3 +26,21 @@ export interface TimeseriesChartProps {
   theme: Theme;
   onZoom?: (from: number, to: number) => void;
 }
+
+export interface MarkBound {
+  xAxis: number;
+  itemStyle?: { color: string; opacity: number };
+  label?: {
+    show: boolean;
+    position: 'insideTopLeft';
+    formatter: string;
+    color: string;
+    fontSize: number;
+  };
+}
+
+export interface ZrEvent {
+  offsetX: number;
+  offsetY: number;
+  which?: number;
+}

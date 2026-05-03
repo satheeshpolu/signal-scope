@@ -11,19 +11,9 @@ import { type SignalKind as SignalKindType, SignalKind } from '@/features/signal
 import { useTheme } from '@/lib/theme/ThemeContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronLeftIcon } from '@/components/icons';
+import { MS_30D, PRESETS } from '@/features/instruments/constants';
 
 const NOW = Date.now();
-const MS_24H = 24 * 60 * 60 * 1000;
-const MS_7D = 7 * MS_24H;
-const MS_30D = 30 * MS_24H;
-const MS_1Y = 365 * MS_24H;
-
-const PRESETS = [
-  { label: '24h', ms: MS_24H },
-  { label: '7d', ms: MS_7D },
-  { label: '30d', ms: MS_30D },
-  { label: '1y', ms: MS_1Y },
-] as const;
 
 function defaultFrom() {
   return NOW - MS_30D;
@@ -32,7 +22,7 @@ function defaultFrom() {
 export default function InspectPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-
+  // Todo Back with history
   const signal = (searchParams.get('signal') as SignalKindType | null) ?? SignalKind.Close;
   const from = parseInt(searchParams.get('from') ?? String(defaultFrom()), 10);
   const to = parseInt(searchParams.get('to') ?? String(NOW), 10);

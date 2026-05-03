@@ -19,8 +19,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useDebounce } from '@/lib/hooks/useDebounce';
-
-const PAGE_SIZE = 5;
+import { PAGE_SIZE } from '@/features/instruments/constants';
 
 const colHelper = createColumnHelper<Instrument>();
 
