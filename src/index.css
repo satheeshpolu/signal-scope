@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%,
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    @theme — dark defaults (every color becomes a --color-* CSS custom property
    so [data-theme="light"] can override them at higher specificity)

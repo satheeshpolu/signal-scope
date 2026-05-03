@@ -11,13 +11,13 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { useGetInstruments } from '@/features/instruments/hooks/useGetInstruments';
-import type { Instrument } from '@/features/instruments/api/types';
-import { SortField, SortDir } from '@/features/instruments/api/types';
+import { type Instrument, SortField, SortDir } from '@/features/instruments/api/types';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 
 const PAGE_SIZE = 5;
@@ -152,198 +152,190 @@ export default function InstrumentsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-surface-950 px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text">SignalScope</h1>
-          <p className="mt-1 text-sm text-text-muted">Crypto signal inspection tool</p>
-        </div>
-        <ThemeToggle />
-      </div>
-
-      {/* Controls */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <input
-          type="search"
-          placeholder="Search symbol…"
-          value={rawQ}
-          onChange={handleSearch}
-          className="h-8 w-56 rounded-md border border-border-default bg-surface-800 px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-400"
-          aria-label="Search instruments"
-        />
-
-        <select
-          value={`${sortField}:${sortDir}`}
-          onChange={(e) => {
-            const [field, dir] = e.target.value.split(':');
-            setSearchParams((p) => {
-              p.set('sort', field);
-              p.set('dir', dir);
-              p.set('page', '1');
-              return p;
-            });
-          }}
-          className="h-8 rounded-md border border-border-default bg-surface-800 px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer"
-          aria-label="Sort by"
-        >
-          <option value="symbol:asc">Symbol A→Z</option>
-          <option value="symbol:desc">Symbol Z→A</option>
-          <option value="changePct24h:desc">24h % High→Low</option>
-          <option value="changePct24h:asc">24h % Low→High</option>
-          <option value="volume:desc">Volume High→Low</option>
-        </select>
-
-        <p className="ml-auto flex items-center gap-2 text-md text-text-muted text-right">
-          <Link to="/" className="inline-flex items-center gap-1 text-primary-400 hover:underline">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <polyline points="3 3 3 9 9 9" />
-            </svg>
-            Reset Filter(s)
-          </Link>
-        </p>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border-default">
-        {isLoading && (
-          <div className="flex justify-center py-16">
-            <Spinner className="h-8 w-8 text-primary-400" />
-          </div>
-        )}
-
-        {isError && (
-          <ErrorState
-            message={(error as { message?: string })?.message ?? 'Failed to load instruments.'}
-            onRetry={() => void refetch()}
+    <div className="flex min-h-screen flex-col bg-surface-950">
+      <Header />
+      <main className="mx-auto w-full max-w-screen-xl flex-1 px-6 py-6">
+        {/* Controls */}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <input
+            type="search"
+            placeholder="Search symbol…"
+            value={rawQ}
+            onChange={handleSearch}
+            className="h-8 w-56 rounded-md border border-border-default bg-surface-800 px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-400"
+            aria-label="Search instruments"
           />
-        )}
 
-        {!isLoading && !isError && (
-          <>
-            <table className="w-full text-md" role="grid">
-              <thead className="border-b border-border-default bg-surface-900">
-                {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id}>
-                    {hg.headers.map((h) => (
-                      <th
-                        key={h.id}
-                        className="px-4 py-3 text-left font-medium text-text-secondary"
-                        aria-sort={
-                          h.column.getIsSorted() === 'asc'
-                            ? 'ascending'
-                            : h.column.getIsSorted() === 'desc'
-                              ? 'descending'
-                              : undefined
-                        }
-                      >
-                        {h.column.getCanSort() ? (
-                          <button
-                            className="flex items-center gap-1 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
-                            onClick={h.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(h.column.columnDef.header, h.getContext())}
-                            <span className="text-xs opacity-50">
-                              {h.column.getIsSorted() === 'asc'
-                                ? '↑'
-                                : h.column.getIsSorted() === 'desc'
-                                  ? '↓'
-                                  : '↕'}
-                            </span>
-                          </button>
-                        ) : (
-                          flexRender(h.column.columnDef.header, h.getContext())
-                        )}
-                      </th>
-                    ))}
-                    <th className="px-6 py-3 text-left font-medium text-text-secondary">
-                      [Inspect]
-                    </th>
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={7}>
-                      <EmptyState message="No instruments match your search." />
-                    </td>
-                  </tr>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="border-b border-border-subtle last:border-0 hover:bg-surface-800"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-4 py-3 text-text-primary">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                      <td className="px-4 py-3">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleInspect(row.original.symbol)}
-                          className="text-gray-200 cursor-pointer"
+          <select
+            value={`${sortField}:${sortDir}`}
+            onChange={(e) => {
+              const [field, dir] = e.target.value.split(':');
+              setSearchParams((p) => {
+                p.set('sort', field);
+                p.set('dir', dir);
+                p.set('page', '1');
+                return p;
+              });
+            }}
+            className="h-8 rounded-md border border-border-default bg-surface-800 px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer"
+            aria-label="Sort by"
+          >
+            <option value="symbol:asc">Symbol A→Z</option>
+            <option value="symbol:desc">Symbol Z→A</option>
+            <option value="changePct24h:desc">24h % High→Low</option>
+            <option value="changePct24h:asc">24h % Low→High</option>
+            <option value="volume:desc">Volume High→Low</option>
+          </select>
+
+          <p className="ml-auto flex items-center gap-2 text-md text-text-muted text-right">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 text-primary-400 hover:underline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <polyline points="3 3 3 9 9 9" />
+              </svg>
+              Reset Filter(s)
+            </Link>
+          </p>
+        </div>
+        {/* Table */}
+        <div className="overflow-x-auto rounded-lg border border-border-default">
+          {isLoading && (
+            <div className="flex justify-center py-16">
+              <Spinner className="h-8 w-8 text-primary-400" />
+            </div>
+          )}
+
+          {isError && (
+            <ErrorState
+              message={(error as { message?: string })?.message ?? 'Failed to load instruments.'}
+              onRetry={() => void refetch()}
+            />
+          )}
+
+          {!isLoading && !isError && (
+            <>
+              <table className="w-full text-md" role="grid">
+                <thead className="border-b border-border-default bg-surface-900">
+                  {table.getHeaderGroups().map((hg) => (
+                    <tr key={hg.id}>
+                      {hg.headers.map((h) => (
+                        <th
+                          key={h.id}
+                          className="px-4 py-3 text-left font-medium text-text-secondary"
+                          aria-sort={
+                            h.column.getIsSorted() === 'asc'
+                              ? 'ascending'
+                              : h.column.getIsSorted() === 'desc'
+                                ? 'descending'
+                                : undefined
+                          }
                         >
-                          Inspect →
-                        </Button>
+                          {h.column.getCanSort() ? (
+                            <button
+                              className="flex items-center gap-1 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+                              onClick={h.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(h.column.columnDef.header, h.getContext())}
+                              <span className="text-xs opacity-50">
+                                {h.column.getIsSorted() === 'asc'
+                                  ? '↑'
+                                  : h.column.getIsSorted() === 'desc'
+                                    ? '↓'
+                                    : '↕'}
+                              </span>
+                            </button>
+                          ) : (
+                            flexRender(h.column.columnDef.header, h.getContext())
+                          )}
+                        </th>
+                      ))}
+                      <th className="px-6 py-3 text-left font-medium text-text-secondary">
+                        [Inspect]
+                      </th>
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={7}>
+                        <EmptyState message="No instruments match your search." />
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-border-subtle last:border-0 hover:bg-surface-800"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="px-4 py-3 text-text-primary">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                        <td className="px-4 py-3">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => handleInspect(row.original.symbol)}
+                            className="text-gray-200 cursor-pointer"
+                          >
+                            Inspect →
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
 
-            {/* Pager */}
-            {table.getRowModel().rows.length != 0 && (
-              <div className="flex items-center justify-between border-t border-border-default px-4 py-3">
-                <span className="text-md text-text-muted">
-                  Page {table.getState().pagination.pageIndex + 1} of{' '}
-                  {Math.max(1, table.getPageCount())}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="md"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                    aria-label="Previous page"
-                  >
-                    ‹ Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                    aria-label="Next page"
-                  >
-                    Next ›
-                  </Button>
+              {/* Pager */}
+              {table.getRowModel().rows.length !== 0 && (
+                <div className="flex items-center justify-between border-t border-border-default px-4 py-3">
+                  <span className="text-md text-text-muted">
+                    Page {table.getState().pagination.pageIndex + 1} of{' '}
+                    {Math.max(1, table.getPageCount())}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                      aria-label="Previous page"
+                    >
+                      ‹ Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="md"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                      aria-label="Next page"
+                    >
+                      Next ›
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
+      </main>
 
-      {/* <p className="mt-4 text-xs text-text-muted">
-        Data from Binance public API · refreshes every 30s ·{" "}
-        <Link to="/" className="text-primary-400 hover:underline">
-          reset filters
-        </Link>
-      </p> */}
+      <Footer />
     </div>
   );
 }
