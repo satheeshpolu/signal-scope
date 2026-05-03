@@ -1,23 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-
-function SignalIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-7 w-7 text-primary-400"
-    >
-      <polyline points="2 16 7 10 12 14 17 6 22 10" />
-      <line x1="2" y1="20" x2="22" y2="20" />
-    </svg>
-  );
-}
+import { SignalIcon } from '@/components/icons';
 
 export function Header() {
   return (
@@ -28,7 +11,7 @@ export function Header() {
         {/* Brand */}
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600/20">
-            <SignalIcon />
+            <SignalIcon className="h-7 w-7 text-primary-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold leading-none tracking-tight text-text-primary">

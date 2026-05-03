@@ -7,10 +7,10 @@ import { TimeseriesChart } from '@/features/samples/components/TimeseriesChart';
 import { LabelSidebar } from '@/features/labels/components/LabelSidebar';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { SignalKind } from '@/features/signals/api/types';
-import type { SignalKind as SignalKindType } from '@/features/signals/api/types';
+import { type SignalKind as SignalKindType, SignalKind } from '@/features/signals/api/types';
 import { useTheme } from '@/lib/theme/ThemeContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ChevronLeftIcon } from '@/components/icons';
 
 const NOW = Date.now();
 const MS_24H = 24 * 60 * 60 * 1000;
@@ -169,19 +169,7 @@ export default function InspectPage() {
             className="flex items-center gap-1 text-md text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 rounded "
             aria-label="Back to instruments list"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>{' '}
-            Back
+            <ChevronLeftIcon /> Back
           </Link>
         </div>
       </header>
