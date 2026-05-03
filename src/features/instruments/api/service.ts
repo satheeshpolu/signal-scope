@@ -3,7 +3,7 @@ import type { IInstrumentsService } from '@/features/instruments/api/interface';
 import type { Instrument, TickerRaw } from '@/features/instruments/api/types';
 import { CURATED_SYMBOLS } from '@/features/instruments/constants';
 
-function adaptTicker(raw: TickerRaw): Instrument {
+export function adaptTicker(raw: TickerRaw): Instrument {
   return {
     symbol: raw.symbol,
     lastPrice: parseFloat(raw.lastPrice),

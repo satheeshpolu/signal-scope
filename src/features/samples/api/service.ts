@@ -12,7 +12,7 @@ function intervalForRange(fromMs: number, toMs: number): string {
   return '1d'; // ≤ 365 candles  (1 y)
 }
 
-function adaptKline(raw: KlineRaw): Sample {
+export function adaptKline(raw: KlineRaw): Sample {
   return {
     t: raw[0],
     close: parseFloat(raw[4]),
