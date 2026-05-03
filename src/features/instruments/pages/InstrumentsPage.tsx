@@ -287,7 +287,7 @@ export default function InstrumentsPage() {
                         <td className="px-4 py-3">
                           <Button
                             variant="primary"
-                            size="sm"
+                            size="md"
                             onClick={() => handleInspect(row.original.symbol)}
                             className="text-gray-200 cursor-pointer"
                           >

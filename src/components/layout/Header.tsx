@@ -4,7 +4,7 @@ import { SignalIcon } from '@/components/icons';
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 overflow-hidden border-b border-border-default bg-surface-950/150 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 overflow-hidden border-b border-border-default bg-surface-800 backdrop-blur-lg">
       {/* flash sweep */}
       <div className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-primary-400/10 to-transparent" />
       <div className="mx-auto flex items-center justify-between px-6 py-3">

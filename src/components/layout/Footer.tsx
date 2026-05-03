@@ -2,7 +2,7 @@ const YEAR = new Date().getFullYear();
 
 export function Footer() {
   return (
-    <footer className="border-t border-border-default bg-surface-950">
+    <footer className="border-t border-border-default bg-surface-700">
       <div className="mx-auto px-6 py-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           {/* Left: brand */}

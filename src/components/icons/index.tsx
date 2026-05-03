@@ -20,7 +20,7 @@ export function SignalIcon({ className = 'h-7 w-7' }: IconProps) {
   );
 }
 
-export function SunIcon({ className = 'h-4 w-4' }: IconProps) {
+export function SunIcon({ className = 'h-6 w-6' }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -45,7 +45,7 @@ export function SunIcon({ className = 'h-4 w-4' }: IconProps) {
   );
 }
 
-export function MoonIcon({ className = 'h-4 w-4' }: IconProps) {
+export function MoonIcon({ className = 'h-6 w-6' }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"

@@ -138,7 +138,7 @@ export default function InspectPage() {
                 key={p.label}
                 onClick={() => setPreset(p.ms)}
                 className={[
-                  'h-7 rounded px-2.5 text-xs font-medium transition-colors',
+                  'h-7 rounded px-2.5 text-md font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 cursor-pointer text-gray-200',
                   active
                     ? 'bg-primary-600'
@@ -156,7 +156,7 @@ export default function InspectPage() {
           <ThemeToggle />
           <Link
             to={backHref}
-            className="flex items-center gap-1 text-md text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 rounded "
+            className="flex items-center gap-1 rounded border border-border-default px-2.5 py-1 text-md text-text-secondary transition-colors hover:border-border-strong hover:bg-surface-800 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
             aria-label="Back to instruments list"
           >
             <ChevronLeftIcon /> Back
