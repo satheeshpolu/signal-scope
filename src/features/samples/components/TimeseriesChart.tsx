@@ -40,7 +40,6 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
   const isVolume = signal === SignalKind.Volume;
 
   const seriesData = samples.map((s) => [s.t, isVolume ? s.volume : s.close]);
-  console.log(seriesData);
   // ECharts MarkArea2DDataItemOption requires an exact [start, end] tuple.
   // Using .map() + explicit return type forces TypeScript to see 2-tuples.
   const markAreaData: [MarkBound, MarkBound][] = labels.map((label) => {

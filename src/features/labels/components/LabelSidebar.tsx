@@ -75,7 +75,7 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
             >
               {/* Category chip */}
               <span
-                className="mb-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium text-surface-950"
+                className="mb-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium text-surface-950 capitalize"
                 style={{ backgroundColor: CATEGORY_COLOR[label.category] }}
               >
                 {label.category}
@@ -92,6 +92,7 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
                   size="sm"
                   onClick={() => setEditing(label)}
                   aria-label={`Edit label ${label.note || label.category}`}
+                  className="cursor-pointer"
                 >
                   Edit
                 </Button>
@@ -100,6 +101,7 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
                   size="sm"
                   onClick={() => remove(label.id)}
                   aria-label={`Delete label ${label.note || label.category}`}
+                  className="cursor-pointer"
                 >
                   Delete
                 </Button>
@@ -126,12 +128,12 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
 
       {/* Legend */}
       <div className="mt-auto pt-4">
-        <p className="mb-2 text-xs font-medium text-text-muted">Categories</p>
+        <p className="mb-2 text-md font-medium text-text-muted">Categories</p>
         <ul className="flex flex-col gap-1">
           {Object.values(LabelCategory).map((c) => (
             <li key={c} className="flex items-center gap-2">
               <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
+                className="inline-block h-4 w-4 rounded-full"
                 style={{ backgroundColor: CATEGORY_COLOR[c] }}
               />
               <span className="text-xs text-text-secondary capitalize">{c}</span>
