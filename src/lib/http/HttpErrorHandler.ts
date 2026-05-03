@@ -1,5 +1,5 @@
-import type { HttpError } from "@/lib/http/types";
-import axios from "axios";
+import type { HttpError } from '@/lib/http/types';
+import axios from 'axios';
 
 export class HttpErrorHandler {
   static normalize(err: unknown): HttpError {
@@ -7,7 +7,7 @@ export class HttpErrorHandler {
       if (err.response) {
         return {
           status: err.response.status,
-          error: err.response.statusText ?? "HttpError",
+          error: err.response.statusText ?? 'HttpError',
           message: (err.response.data as { msg?: string })?.msg ?? err.message,
           details: err.response.data,
         };
@@ -15,8 +15,8 @@ export class HttpErrorHandler {
       // Network error or timeout — no response
       return {
         status: 0,
-        error: "NetworkError",
-        message: err.message ?? "Network request failed",
+        error: 'NetworkError',
+        message: err.message ?? 'Network request failed',
       };
     }
 
@@ -24,6 +24,6 @@ export class HttpErrorHandler {
       return { status: 0, error: err.name, message: err.message };
     }
 
-    return { status: 0, error: "UnknownError", message: String(err) };
+    return { status: 0, error: 'UnknownError', message: String(err) };
   }
 }

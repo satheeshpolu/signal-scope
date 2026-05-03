@@ -2,12 +2,9 @@ interface EmptyStateProps {
   message?: string;
 }
 
-export function EmptyState({ message = "No results found." }: EmptyStateProps) {
+export function EmptyState({ message = 'No results found.' }: EmptyStateProps) {
   return (
-    <div
-      className="flex flex-col items-center justify-center py-16 text-text-muted"
-      role="status"
-    >
+    <div className="flex flex-col items-center justify-center py-16 text-text-muted" role="status">
       <svg
         className="mb-3 h-10 w-10 opacity-40"
         fill="none"

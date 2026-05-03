@@ -1,14 +1,11 @@
-import { Button } from "@/components/ui/Button";
+import { Button } from '@/components/ui/Button';
 
 interface ErrorStateProps {
   message?: string;
   onRetry?: () => void;
 }
 
-export function ErrorState({
-  message = "Something went wrong.",
-  onRetry,
-}: ErrorStateProps) {
+export function ErrorState({ message = 'Something went wrong.', onRetry }: ErrorStateProps) {
   return (
     <div
       className="flex flex-col items-center justify-center gap-3 py-16 text-danger-500"

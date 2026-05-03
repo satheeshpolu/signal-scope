@@ -1,7 +1,6 @@
-import axios from "axios";
-import type { AxiosInstance } from "axios";
-import { HttpErrorHandler } from "@/lib/http/HttpErrorHandler";
-import type { HttpError } from "@/lib/http/types";
+import axios, { type AxiosInstance } from 'axios';
+import { HttpErrorHandler } from '@/lib/http/HttpErrorHandler';
+import type { HttpError } from '@/lib/http/types';
 
 export type { HttpError };
 
@@ -15,7 +14,7 @@ export class HttpClient {
 
   static getInstance(): HttpClient {
     if (!HttpClient.instance) {
-      HttpClient.instance = new HttpClient("https://api.binance.com");
+      HttpClient.instance = new HttpClient('https://api.binance.com');
     }
     return HttpClient.instance;
   }
