@@ -20,6 +20,8 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { PAGE_SIZE } from '@/features/instruments/constants';
+import { InstrumentsSearch } from '../components/InstrumentsSearch';
+import { InstrumentsSort } from '../components/InstrumentsSort';
 
 const colHelper = createColumnHelper<Instrument>();
 
@@ -127,11 +129,22 @@ export default function InstrumentsPage() {
   });
 
   const handleSearch = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (value: string) => {
       setSearchParams((p) => {
-        const v = e.target.value;
-        if (v) p.set('q', v);
+        if (value) p.set('q', value);
         else p.delete('q');
+        p.set('page', '1');
+        return p;
+      });
+    },
+    [setSearchParams],
+  );
+
+  const handleSort = useCallback(
+    (field: string, dir: string) => {
+      setSearchParams((p) => {
+        p.set('sort', field);
+        p.set('dir', dir);
         p.set('page', '1');
         return p;
       });
@@ -156,35 +169,9 @@ export default function InstrumentsPage() {
       <main className="mx-auto w-full flex-1 px-6 py-6">
         {/* Controls */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <input
-            type="search"
-            placeholder="Search symbol…"
-            value={rawQ}
-            onChange={handleSearch}
-            className="h-8 w-56 rounded-md border border-border-default bg-surface-800 px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-400"
-            aria-label="Search instruments"
-          />
+          <InstrumentsSearch value={rawQ} onChange={handleSearch} />
 
-          <select
-            value={`${sortField}:${sortDir}`}
-            onChange={(e) => {
-              const [field, dir] = e.target.value.split(':');
-              setSearchParams((p) => {
-                p.set('sort', field);
-                p.set('dir', dir);
-                p.set('page', '1');
-                return p;
-              });
-            }}
-            className="h-8 rounded-md border border-border-default bg-surface-800 px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer"
-            aria-label="Sort by"
-          >
-            <option value="symbol:asc">Symbol A→Z</option>
-            <option value="symbol:desc">Symbol Z→A</option>
-            <option value="changePct24h:desc">24h % High→Low</option>
-            <option value="changePct24h:asc">24h % Low→High</option>
-            <option value="volume:desc">Volume High→Low</option>
-          </select>
+          <InstrumentsSort sortField={sortField} sortDir={sortDir} onChange={handleSort} />
 
           <p className="ml-auto flex items-center gap-2 text-md text-text-muted text-right">
             <Link

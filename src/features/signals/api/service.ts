@@ -1,6 +1,5 @@
 import type { ISignalsService } from '@/features/signals/api/interface';
-import { SignalKind } from '@/features/signals/api/types';
-import type { Signal } from '@/features/signals/api/types';
+import { SignalKind, type Signal } from '@/features/signals/api/types';
 
 const SIGNALS: readonly Signal[] = [
   { id: SignalKind.Close, label: 'Close Price' },

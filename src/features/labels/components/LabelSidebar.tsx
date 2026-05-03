@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
-import {
-  LabelCategory,
-  CATEGORY_COLOR,
-  type Label,
-  type LabelSidebarProps,
-} from '@/features/labels/types';
+import { LabelCategory, CATEGORY_COLOR, type Label } from '@/features/labels/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { Button } from '@/components/ui/Button';
 
@@ -16,6 +11,10 @@ function formatMs(ms: number): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+export interface LabelSidebarProps {
+  symbol: string;
 }
 
 export function LabelSidebar({ symbol }: LabelSidebarProps) {

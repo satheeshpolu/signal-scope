@@ -23,21 +23,7 @@ export const CATEGORY_COLOR: Record<LabelCategory, string> = {
   breakout: 'var(--color-info-500)',
 };
 
-export interface LabelSidebarProps {
-  symbol: string;
-}
-
 export interface PopoverPosition {
   x: number;
   y: number;
-}
-
-export interface LabelPopoverProps {
-  position: PopoverPosition;
-  initialFrom: number;
-  initialTo: number;
-  symbol: string;
-  editing?: Label;
-  onSave: (data: Omit<Label, 'id'>) => void;
-  onClose: () => void;
 }

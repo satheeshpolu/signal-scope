@@ -1,6 +1,16 @@
 import { useRef, useEffect, type SubmitEvent } from 'react';
-import { LabelCategory, type LabelPopoverProps } from '@/features/labels/types';
+import { LabelCategory, type Label, type PopoverPosition } from '@/features/labels/types';
 import { Button } from '@/components/ui/Button';
+
+export interface LabelPopoverProps {
+  position: PopoverPosition;
+  initialFrom: number;
+  initialTo: number;
+  symbol: string;
+  editing?: Label;
+  onSave: (data: Omit<Label, 'id'>) => void;
+  onClose: () => void;
+}
 
 export function LabelPopover({
   position,
