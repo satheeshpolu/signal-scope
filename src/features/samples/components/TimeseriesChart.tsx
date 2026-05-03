@@ -23,6 +23,7 @@ import {
 } from '@/features/samples/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
+import { getCssVar, resolveCssVar, toRgba } from '@/features/samples/utils';
 
 echarts.use([
   LineChart,
@@ -35,20 +36,11 @@ echarts.use([
   CanvasRenderer,
 ]);
 
-function getCssVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function resolveCssVar(value: string): string {
-  const m = value.match(/^var\((--[^)]+)\)$/);
-  return m ? getCssVar(m[1]) : value;
-}
-
 function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType): EChartsOption {
   const isVolume = signal === SignalKind.Volume;
 
   const seriesData = samples.map((s) => [s.t, isVolume ? s.volume : s.close]);
-
+  console.log(seriesData);
   // ECharts MarkArea2DDataItemOption requires an exact [start, end] tuple.
   // Using .map() + explicit return type forces TypeScript to see 2-tuples.
   const markAreaData: [MarkBound, MarkBound][] = labels.map((label) => {
@@ -125,7 +117,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         xAxisIndex: 0,
         height: 28,
         bottom: 12,
-        fillerColor: `${primary500}22`,
+        fillerColor: toRgba(primary500, 0.13),
         borderColor: borderDefault,
         handleStyle: { color: primary500 },
         // textStyle: { color: textMuted, fontSize: 10 },
@@ -133,7 +125,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         // stays legible on both light and dark backgrounds.
         dataBackground: {
           lineStyle: { color: primary500 },
-          areaStyle: { color: `${primary500}18` },
+          areaStyle: { color: toRgba(primary500, 0.09) },
         },
         textStyle: { color: chartAxisLabelText, fontSize: 10 },
       },
@@ -169,8 +161,8 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
                 x2: 0,
                 y2: 1,
                 colorStops: [
-                  { offset: 0, color: `${primary500}40` },
-                  { offset: 1, color: `${primary500}00` },
+                  { offset: 0, color: toRgba(primary500, 0.25) },
+                  { offset: 1, color: toRgba(primary500, 0) },
                 ],
               },
             },

@@ -144,7 +144,7 @@ export default function InstrumentsPage() {
       const now = Date.now();
       const from = buildDefaultFrom();
       navigate(
-        `/instruments/${symbol}?signal=volume&from=${from}&to=${now}&back=${encodeURIComponent(window.location.search)}`,
+        `/instruments/${symbol}?signal=close&from=${from}&to=${now}&back=${encodeURIComponent(window.location.search)}`,
       );
     },
     [navigate],
