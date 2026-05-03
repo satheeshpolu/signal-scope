@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import type * as ReactRouterDom from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import InstrumentsPage from './InstrumentsPage';
 import * as useGetInstrumentsModule from '@/features/instruments/hooks/useGetInstruments';
@@ -43,7 +44,7 @@ function mockHook(
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
+  const actual = await importOriginal<typeof ReactRouterDom>();
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
@@ -121,7 +122,7 @@ describe('InstrumentsPage — error state', () => {
       data: undefined,
       isLoading: false,
       isError: true,
-      error: { message: 'Request failed' },
+      error: new Error('Request failed'),
     });
     renderPage();
     await waitFor(() => {
