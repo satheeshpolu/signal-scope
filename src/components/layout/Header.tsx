@@ -7,7 +7,7 @@ export function Header() {
     <header className="sticky top-0 z-50 overflow-hidden border-b border-border-default bg-surface-950/150 backdrop-blur-sm">
       {/* flash sweep */}
       <div className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-primary-400/10 to-transparent" />
-      <div className="mx-auto flex max-w-screen-xl items-center justify-between px-6 py-3">
+      <div className="mx-auto flex items-center justify-between px-6 py-3">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600/20">

@@ -153,7 +153,7 @@ export default function InstrumentsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-surface-950">
       <Header />
-      <main className="mx-auto w-full max-w-screen-xl flex-1 px-6 py-6">
+      <main className="mx-auto w-full flex-1 px-6 py-6">
         {/* Controls */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <input
