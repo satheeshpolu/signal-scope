@@ -8,6 +8,7 @@ export interface LabelPopoverProps {
   initialTo: number;
   symbol: string;
   editing?: Label;
+  formRef?: React.RefObject<HTMLFormElement | null>;
   onSave: (data: Omit<Label, 'id'>) => void;
   onClose: () => void;
 }
@@ -18,10 +19,12 @@ export function LabelPopover({
   initialTo,
   symbol,
   editing,
+  formRef: externalFormRef,
   onSave,
   onClose,
 }: LabelPopoverProps) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const internalFormRef = useRef<HTMLFormElement>(null);
+  const formRef = externalFormRef ?? internalFormRef;
   const firstInputRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
