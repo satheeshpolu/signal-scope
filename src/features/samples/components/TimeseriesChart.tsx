@@ -23,7 +23,7 @@ import {
 } from '@/features/samples/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
-import { getCssVar, resolveCssVar, toRgba } from '@/features/samples/utils';
+import { formatMs, getCssVar, resolveCssVar, toRgba } from '@/features/samples/utils';
 
 echarts.use([
   LineChart,
@@ -35,7 +35,6 @@ echarts.use([
   AxisPointerComponent,
   CanvasRenderer,
 ]);
-
 function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType): EChartsOption {
   const isVolume = signal === SignalKind.Volume;
 
@@ -187,6 +186,12 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     from: 0,
     to: 0,
   });
+  const [dragSelection, setDragSelection] = useState<{
+    x: number;
+    width: number;
+    from: number;
+    to: number;
+  } | null>(null);
   const { add } = useLabelsStore();
 
   // Init chart once
@@ -222,6 +227,8 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
         startTime: dataCoord[0] as number,
         endTime: dataCoord[0] as number,
       };
+      if (containerRef.current)
+        containerRef.current.querySelector('canvas')!.style.cursor = 'crosshair';
     });
 
     zr.on('mousemove', (e: unknown) => {
@@ -230,12 +237,26 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
       const dataCoord = chart.convertFromPixel({ gridIndex: 0 }, [ev.offsetX, ev.offsetY]);
       if (!Array.isArray(dataCoord) || dataCoord.length < 2) return;
       dragRef.current.endTime = dataCoord[0] as number;
+      const x = Math.min(dragRef.current.startX, ev.offsetX);
+      const width = Math.abs(ev.offsetX - dragRef.current.startX);
+      const from = Math.min(dragRef.current.startTime, dragRef.current.endTime);
+      const to = Math.max(dragRef.current.startTime, dragRef.current.endTime);
+      setDragSelection({ x, width, from, to });
+      setPopover({
+        visible: false,
+        x: 0,
+        y: 0,
+        from,
+        to,
+      });
     });
 
     zr.on('mouseup', (e: unknown) => {
       if (!dragRef.current.active) return;
       const ev = e as ZrEvent;
       dragRef.current.active = false;
+      if (containerRef.current) containerRef.current.querySelector('canvas')!.style.cursor = '';
+      // setDragSelection(null);
 
       const dx = Math.abs(ev.offsetX - dragRef.current.startX);
       if (dx < 8) return; // too small — ignore, treat as click
@@ -278,19 +299,37 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     (data: Omit<Label, 'id'>) => {
       add(data);
       setPopover((p) => ({ ...p, visible: false }));
+      setDragSelection(null);
     },
     [add],
   );
 
   const handleClose = useCallback(() => {
     setPopover((p) => ({ ...p, visible: false }));
+    setDragSelection(null);
   }, []);
+
+  // Hide ECharts tooltip + crosshair while the label popover is open
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.setOption({ tooltip: { show: !popover.visible } });
+  }, [popover.visible]);
 
   return (
     <div className="relative h-full w-full" ref={containerRef}>
+      {dragSelection && (
+        <div
+          className="pointer-events-none absolute bg-gray-400/20 border-x border-gray-400/60"
+          style={{ left: dragSelection.x, width: dragSelection.width, top: 0, bottom: 80 }}
+        >
+          <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-surface-600/90 px-2 py-0.5 text-[12px] font-medium text-text-secondary shadow ring-1 ring-border-default/40">
+            {formatMs(dragSelection.from)}&nbsp;–&nbsp;{formatMs(dragSelection.to)}
+          </div>
+        </div>
+      )}
       {popover.visible && (
         <LabelPopover
-          position={{ x: popover.x, y: popover.y }}
+          position={{ x: popover.x + 50, y: 200 }}
           initialFrom={popover.from}
           initialTo={popover.to}
           symbol={symbol}

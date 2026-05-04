@@ -12,7 +12,6 @@ import { useTheme } from '@/lib/theme/ThemeContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MS_30D, PRESETS } from '@/features/instruments/constants';
-import { cn } from '@/components/ui/cn';
 
 const NOW = Date.now();
 
@@ -138,13 +137,13 @@ export default function InspectPage() {
               <button
                 key={p.label}
                 onClick={() => setPreset(p.ms)}
-                className={cn(
+                className={[
                   'h-7 rounded px-2.5 text-md font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 cursor-pointer text-gray-200',
                   active
                     ? 'bg-primary-600'
                     : 'bg-surface-700 text-text-secondary hover:bg-surface-600',
-                )}
+                ].join(' ')}
                 aria-pressed={active}
               >
                 {p.label}
@@ -168,15 +167,15 @@ export default function InspectPage() {
       {/* Body */}
       <div className="flex min-h-0 flex-1">
         {/* Chart area */}
-        <main className="flex min-w-0 flex-1 flex-col p-4">
+        <main className="flex min-w-0 flex-1 flex-col p-16">
           {isLoading && (
-            <div className="flex flex-1 items-center justify-center">
+            <div className="flex items-center justify-center">
               <Spinner className="h-10 w-10 text-primary-400" />
             </div>
           )}
 
           {isError && (
-            <div className="flex flex-1 items-center justify-center">
+            <div className="flex  items-center justify-center">
               <ErrorState
                 message={(error as { message?: string })?.message ?? 'Failed to load chart data.'}
                 onRetry={() => void refetch()}

@@ -3,15 +3,7 @@ import { useLabelsStore } from '@/features/labels/store/labelsStore';
 import { LabelCategory, CATEGORY_COLOR, type Label } from '@/features/labels/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { Button } from '@/components/ui/Button';
-
-function formatMs(ms: number): string {
-  return new Date(ms).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { formatMs } from '@/features/samples/utils';
 
 export interface LabelSidebarProps {
   symbol: string;
