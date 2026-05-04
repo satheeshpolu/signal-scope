@@ -1,75 +1,95 @@
-# React + TypeScript + Vite
+# signal-scope
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A financial timeseries inspection tool built with React 19, TypeScript, and ECharts.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Local development (no Docker)
 
-## React Compiler
+**Prerequisites:** Node 22+
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```sh
+# Install dependencies
+npm install
 
-Note: This will impact Vite dev & build performances.
+# Start dev server — http://localhost:5173
+npm run dev
 
-## Expanding the ESLint configuration
+# Run tests
+npm test
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Lint + type-check
+npm run lint
+npx tsc --noEmit
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+# Production build
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+## Docker
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+**Prerequisites:** Docker Desktop
+
+### Using `just` (recommended)
+
+```sh
+# Install just (macOS)
+brew install just
+
+# List all available recipes
+just
+
+# Start dev server with HMR — http://localhost:5173
+just dev
+
+# Run tests inside container
+just test
+
+# Lint + type-check inside container
+just lint
+
+# Run tests + lint
+just check
+
+# Build production assets
+just build
+
+# Serve production build via nginx — http://localhost:8080
+just preview
+```
+
+### Using `docker compose` directly
+
+```sh
+# Dev server — http://localhost:5173
+docker compose up app
+
+# Rebuild and start dev server
+docker compose up --build app
+
+# Run tests
+docker compose run --rm app npm test -- --run
+
+# Drop into a shell inside the container
+docker compose run --rm app sh
+
+# Production build + nginx preview — http://localhost:8080
+docker compose up --build preview
+
+# Stop all services
+docker compose down
+
+# Stop and remove volumes (wipes node_modules volume)
+docker compose down -v
+```
+
+### First-time Docker setup
+
+The `package-lock.json` must be in sync with `package.json` for `npm ci` to succeed inside the container. If you see an `EUSAGE` error from `npm ci`, regenerate the lockfile using the exact Node version the container uses:
+
+```sh
+docker compose run --rm --no-deps app npm install
+docker compose build --no-cache app
 ```
