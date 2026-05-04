@@ -2,7 +2,8 @@
 FROM node:22-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install
+# npm ci requires lockfile in sync with package.json; run `npm install` on host
+# to regenerate package-lock.json if this step fails.
 RUN npm ci
 
 # ── dev: source is bind-mounted at runtime via compose ─────────────────────────
@@ -16,6 +17,6 @@ RUN npm run build
 
 # ── preview: nginx serves the built assets ─────────────────────────────────────
 FROM nginx:1.27-alpine AS preview
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 8080
+EXPOSE 80

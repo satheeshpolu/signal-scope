@@ -3,6 +3,7 @@ services:
   app:
     build:
       context: .
+      dockerfile: docker/Dockerfile
       target: dev
     volumes:
       - .:/app
@@ -20,6 +21,7 @@ services:
   preview:
     build:
       context: .
+      dockerfile: docker/Dockerfile
       target: preview
     ports:
       - '8080:80'
