@@ -276,7 +276,7 @@ export default function InstrumentsPage() {
                             variant="primary"
                             size="md"
                             onClick={() => handleInspect(row.original.symbol)}
-                            className="text-gray-200 cursor-pointer"
+                            className="text-text-primary cursor-pointer"
                           >
                             Inspect →
                           </Button>

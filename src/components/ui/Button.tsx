@@ -12,7 +12,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: ['bg-primary-600 text-text-primary', 'hover:bg-primary-500 active:bg-primary-700'],
+        primary: ['bg-primary-400 text-text-primary', 'hover:bg-primary-500 active:bg-primary-700'],
         ghost: [
           'bg-transparent text-text-secondary',
           'hover:bg-surface-800 hover:text-text-primary active:bg-surface-700',

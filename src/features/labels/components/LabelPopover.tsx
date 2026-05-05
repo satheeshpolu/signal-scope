@@ -93,7 +93,7 @@ export function LabelPopover({
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" className="text-gray-200">
+          <Button type="submit" variant="primary" size="sm" className="text-text-primary">
             Save
           </Button>
         </div>

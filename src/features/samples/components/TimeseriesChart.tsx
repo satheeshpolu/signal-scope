@@ -338,7 +338,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     <div className="relative h-full w-full" ref={containerRef}>
       {dragSelection && (
         <div
-          className="pointer-events-none absolute bg-gray-400/20 border-x border-gray-400/60"
+          className="pointer-events-none absolute bg-primary-400/20 border-x border-primary-400/60"
           style={{ left: dragSelection.x, width: dragSelection.width, top: 0, bottom: 80 }}
         >
           <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-surface-600/90 px-2 py-0.5 text-[12px] font-medium text-text-secondary shadow ring-1 ring-border-default/40">

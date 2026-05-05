@@ -5,6 +5,7 @@ import { useGetSignals } from '@/features/signals/hooks/useGetSignals';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
 import { TimeseriesChart } from '@/features/samples/components/TimeseriesChart';
 import { LabelSidebar } from '@/features/labels/components/LabelSidebar';
+import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { type SignalKind as SignalKindType, SignalKind } from '@/features/signals/api/types';
@@ -134,20 +135,16 @@ export default function InspectPage() {
           {PRESETS.map((p) => {
             const active = Math.abs(to - from - p.ms) < 60_000 * 5;
             return (
-              <button
+              <Button
                 key={p.label}
+                variant={active ? 'primary' : 'ghost'}
+                size="sm"
                 onClick={() => setPreset(p.ms)}
-                className={[
-                  'h-7 rounded px-2.5 text-md font-medium transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 cursor-pointer text-gray-200',
-                  active
-                    ? 'bg-primary-600'
-                    : 'bg-surface-700 text-text-secondary hover:bg-surface-600',
-                ].join(' ')}
+                className="cursor-pointer"
                 aria-pressed={active}
               >
                 {p.label}
-              </button>
+              </Button>
             );
           })}
         </div>

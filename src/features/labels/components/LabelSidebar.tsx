@@ -36,7 +36,7 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
             onClick={undo}
             title="Undo (Ctrl+Z)"
             aria-label="Undo"
-            className="text-gray-200 cursor-pointer"
+            className="text-text-primary cursor-pointer"
           >
             ↩
           </Button>
@@ -46,7 +46,7 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
             onClick={redo}
             title="Redo (Ctrl+Shift+Z)"
             aria-label="Redo"
-            className="text-gray-200 cursor-pointer"
+            className="text-text-primary cursor-pointer"
           >
             ↪
           </Button>
