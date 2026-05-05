@@ -1,6 +1,15 @@
 import type { ChangeEvent } from 'react';
 import type { SortField, SortDir } from '@/features/instruments/api/types';
 
+const SORT_OPTIONS = [
+  { value: 'symbol:asc', label: 'Symbol A→Z' },
+  { value: 'symbol:desc', label: 'Symbol Z→A' },
+  { value: 'changePct24h:desc', label: '24h % High→Low' },
+  { value: 'changePct24h:asc', label: '24h % Low→High' },
+  { value: 'volume:desc', label: 'Volume High→Low' },
+  { value: 'volume:asc', label: 'Volume Low→High' },
+] as const;
+
 interface InstrumentsSortProps {
   sortField: SortField;
   sortDir: SortDir;
@@ -20,11 +29,11 @@ export function InstrumentsSort({ sortField, sortDir, onChange }: InstrumentsSor
       className="h-8 rounded-md border border-border-default bg-surface-800 px-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-400 cursor-pointer"
       aria-label="Sort by"
     >
-      <option value="symbol:asc">Symbol A→Z</option>
-      <option value="symbol:desc">Symbol Z→A</option>
-      <option value="changePct24h:desc">24h % High→Low</option>
-      <option value="changePct24h:asc">24h % Low→High</option>
-      <option value="volume:desc">Volume High→Low</option>
+      {SORT_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
     </select>
   );
 }
