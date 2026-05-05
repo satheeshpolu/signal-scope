@@ -332,6 +332,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
   useEffect(() => {
     if (!chartRef.current) return;
     chartRef.current.setOption({ tooltip: { show: !popover.visible } });
+    chartRef.current.dispatchAction({ type: 'hideTip' });
   }, [popover.visible]);
 
   return (
