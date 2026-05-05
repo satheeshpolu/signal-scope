@@ -115,6 +115,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         xAxisIndex: 0,
         height: 28,
         bottom: 12,
+        showDetail: false,
         fillerColor: toRgba(primary500, 0.13),
         borderColor: borderDefault,
         handleStyle: { color: primary500 },
