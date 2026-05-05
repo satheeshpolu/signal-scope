@@ -23,7 +23,7 @@ function defaultFrom() {
 export default function InspectPage() {
   const { symbol } = useParams<{ symbol: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  // Todo Back with history
+
   const signal = (searchParams.get('signal') as SignalKindType | null) ?? SignalKind.Close;
   const from = parseInt(searchParams.get('from') ?? String(defaultFrom()), 10);
   const to = parseInt(searchParams.get('to') ?? String(NOW), 10);
