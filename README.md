@@ -6,7 +6,7 @@ A financial timeseries inspection tool built with React 19, TypeScript, and ECha
 
 ## Local development (no Docker)
 
-**Prerequisites:** Node 22+
+**Prerequisites:** Node 24+
 
 ```sh
 # Install dependencies
@@ -85,11 +85,3 @@ docker compose down
 docker compose down -v
 ```
 
-### First-time Docker setup
-
-The `package-lock.json` must be in sync with `package.json` for `npm ci` to succeed inside the container. If you see an `EUSAGE` error from `npm ci`, regenerate the lockfile using the exact Node version the container uses:
-
-```sh
-docker compose run --rm --no-deps app npm install
-docker compose build --no-cache app
-```

@@ -1,9 +1,7 @@
 # ── base: install deps only (layer-cached until package.json changes) ──────────
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json ./
-# npm ci requires lockfile in sync with package.json; run `npm install` on host
-# to regenerate package-lock.json if this step fails.
 RUN npm ci
 
 # ── dev: source is bind-mounted at runtime via compose ─────────────────────────
