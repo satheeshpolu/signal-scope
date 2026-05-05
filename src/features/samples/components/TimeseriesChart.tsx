@@ -171,7 +171,15 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
   };
 }
 
-export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: TimeseriesChartProps) {
+export function TimeseriesChart({
+  samples,
+  labels,
+  signal,
+  symbol,
+  viewFrom,
+  viewTo,
+  onZoom,
+}: TimeseriesChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<EChartsType | null>(null);
   const dragRef = useRef<DragState>({
@@ -181,6 +189,23 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     endTime: 0,
   });
   const dzPercentRef = useRef({ start: 0, end: 100 });
+  const samplesRef = useRef(samples);
+  useEffect(() => {
+    samplesRef.current = samples;
+  }, [samples]);
+  const onZoomRef = useRef(onZoom);
+  useEffect(() => {
+    onZoomRef.current = onZoom;
+  }, [onZoom]);
+  const viewFromRef = useRef(viewFrom);
+  useEffect(() => {
+    viewFromRef.current = viewFrom;
+  }, [viewFrom]);
+  const viewToRef = useRef(viewTo);
+  useEffect(() => {
+    viewToRef.current = viewTo;
+  }, [viewTo]);
+  const prevSamplesRef = useRef<typeof samples | null>(null);
   const [popover, setPopover] = useState<PopoverState>({
     visible: false,
     x: 0,
@@ -217,8 +242,19 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
       if (entry.start != null && entry.end != null) {
         dzPercentRef.current = { start: entry.start, end: entry.end };
       }
-      if (entry.startValue != null && entry.endValue != null && onZoom) {
-        onZoom(entry.startValue, entry.endValue);
+      let startVal = entry.startValue;
+      let endVal = entry.endValue;
+      if ((startVal == null || endVal == null) && entry.start != null && entry.end != null) {
+        const s = samplesRef.current;
+        if (s.length > 0) {
+          const minT = s[0].t;
+          const maxT = s[s.length - 1].t;
+          startVal = minT + (entry.start / 100) * (maxT - minT);
+          endVal = minT + (entry.end / 100) * (maxT - minT);
+        }
+      }
+      if (startVal != null && endVal != null && onZoomRef.current) {
+        onZoomRef.current(startVal, endVal);
       }
       setPopover((p) => ({ ...p, visible: false }));
       setDragSelection(null);
@@ -307,13 +343,45 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update option when data changes
+  // Update option when data changes; restore zoom when a new sample set arrives
   useEffect(() => {
     if (!chartRef.current) return;
+    const samplesChanged = samples !== prevSamplesRef.current;
+    prevSamplesRef.current = samples;
+
     chartRef.current.setOption(buildOption(samples, labels, signal), {
       notMerge: false,
       lazyUpdate: true,
     });
+
+    if (samplesChanged && samples.length > 0) {
+      const minT = samples[0].t;
+      const maxT = samples[samples.length - 1].t;
+      const totalSpan = maxT - minT;
+      let start = 0;
+      let end = 100;
+      const vFrom = viewFromRef.current;
+      const vTo = viewToRef.current;
+      if (totalSpan > 0 && vFrom != null && vTo != null) {
+        const s = Math.max(0, ((vFrom - minT) / totalSpan) * 100);
+        const e = Math.min(100, ((vTo - minT) / totalSpan) * 100);
+        // Only restore zoom if actually zoomed in (not showing the full range)
+        if (e - s < 99) {
+          start = s;
+          end = e;
+        }
+      }
+      chartRef.current.setOption(
+        {
+          dataZoom: [
+            { start, end },
+            { start, end },
+          ],
+        },
+        { notMerge: false, lazyUpdate: true },
+      );
+      dzPercentRef.current = { start, end };
+    }
   }, [samples, labels, signal]);
 
   const handleSave = useCallback(

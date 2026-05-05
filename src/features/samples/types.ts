@@ -24,6 +24,9 @@ export interface TimeseriesChartProps {
   signal: SignalKindType;
   symbol: string;
   theme: Theme;
+  /** The current visible time window (from URL). Used to restore zoom on reload. */
+  viewFrom?: number;
+  viewTo?: number;
   onZoom?: (from: number, to: number) => void;
 }
 
