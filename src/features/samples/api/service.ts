@@ -3,7 +3,7 @@ import type { ISamplesService } from '@/features/samples/api/interface';
 import type { KlineRaw, Sample, SampleParams } from '@/features/samples/api/types';
 import { lttb } from '@/features/samples/utils';
 
-const MAX_CHART_POINTS = 1_000;
+const MAX_CHART_POINTS = 50_000;
 
 /** Picks the klines interval that fits the window within Binance's 1000-candle limit */
 function intervalForRange(fromMs: number, toMs: number): string {
