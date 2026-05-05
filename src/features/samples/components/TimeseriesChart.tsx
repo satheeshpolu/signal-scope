@@ -285,7 +285,7 @@ export function TimeseriesChart({
     zr.on('mousemove', (e: unknown) => {
       const ev = e as ZrEvent;
       if (!inGrid(ev.offsetX, ev.offsetY)) {
-        // Determine cursor based on whether mouse is over the filled selection or empty track
+        // Determine cursor based on position within the slider bar
         const canvas = containerRef.current?.querySelector('canvas');
         if (canvas) {
           const { start, end } = dzPercentRef.current;
@@ -293,8 +293,16 @@ export function TimeseriesChart({
           const startPx = 60 + (start / 100) * (w - 60 - 16);
           const endPx = 60 + (end / 100) * (w - 60 - 16);
           const hasZoom = end - start < 99;
-          canvas.style.cursor =
-            hasZoom && ev.offsetX >= startPx && ev.offsetX <= endPx ? 'pointer' : 'crosshair';
+          const handleHitArea = 6; // px tolerance around each handle
+          const nearStart = hasZoom && Math.abs(ev.offsetX - startPx) <= handleHitArea;
+          const nearEnd = hasZoom && Math.abs(ev.offsetX - endPx) <= handleHitArea;
+          if (nearStart || nearEnd) {
+            canvas.style.cursor = 'ew-resize';
+          } else if (hasZoom && ev.offsetX > startPx && ev.offsetX < endPx) {
+            canvas.style.cursor = 'grab';
+          } else {
+            canvas.style.cursor = 'default';
+          }
         }
         if (!dragRef.current.active) return;
       }
