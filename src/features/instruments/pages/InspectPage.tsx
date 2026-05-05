@@ -89,6 +89,7 @@ export default function InspectPage() {
 
   const handleZoom = useCallback(
     (zFrom: number, zTo: number) => {
+      if (zTo - zFrom < 60 * 60_000) return;
       setSearchParams(
         (p) => {
           p.set('from', String(Math.round(zFrom)));

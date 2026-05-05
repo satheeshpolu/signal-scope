@@ -108,7 +108,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         xAxisIndex: 0,
         filterMode: 'filter',
         zoomOnMouseWheel: true,
-        moveOnMouseMove: true,
+        moveOnMouseMove: false,
       },
       {
         type: 'slider',
@@ -133,6 +133,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
           {
             type: isVolume ? 'bar' : 'line',
             data: seriesData,
+            barMaxWidth: 40,
             itemStyle: { color: primary500 },
             emphasis: {
               itemStyle: { color: primary400 },
@@ -203,13 +204,15 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     chartRef.current = chart;
 
     // Zoom callback — notify parent to update URL
-    chart.on('dataZoom', () => {
-      const option = chart.getOption() as {
-        dataZoom?: Array<{ startValue?: number; endValue?: number }>;
+    chart.on('dataZoom', (params: unknown) => {
+      const ev = params as {
+        batch?: Array<{ startValue?: number; endValue?: number }>;
+        startValue?: number;
+        endValue?: number;
       };
-      const dz = option.dataZoom?.[0];
-      if (dz?.startValue != null && dz?.endValue != null && onZoom) {
-        onZoom(dz.startValue, dz.endValue);
+      const entry = ev.batch?.[0] ?? ev;
+      if (entry.startValue != null && entry.endValue != null && onZoom) {
+        onZoom(entry.startValue, entry.endValue);
       }
     });
 
