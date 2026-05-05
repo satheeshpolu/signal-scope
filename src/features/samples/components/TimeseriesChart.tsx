@@ -207,6 +207,7 @@ export function TimeseriesChart({
     viewToRef.current = viewTo;
   }, [viewTo]);
   const prevSamplesRef = useRef<typeof samples | null>(null);
+  const zoomRafRef = useRef<number | null>(null);
   const [popover, setPopover] = useState<PopoverState>({
     visible: false,
     x: 0,
@@ -348,6 +349,9 @@ export function TimeseriesChart({
       ro.disconnect();
       chart.dispose();
       chartRef.current = null;
+      // Reset so zoom restores correctly on remount (React StrictMode & HMR)
+      prevSamplesRef.current = null;
+      if (zoomRafRef.current != null) cancelAnimationFrame(zoomRafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -367,29 +371,32 @@ export function TimeseriesChart({
       const minT = samples[0].t;
       const maxT = samples[samples.length - 1].t;
       const totalSpan = maxT - minT;
-      let start = 0;
-      let end = 100;
       const vFrom = viewFromRef.current;
       const vTo = viewToRef.current;
       if (totalSpan > 0 && vFrom != null && vTo != null) {
         const s = Math.max(0, ((vFrom - minT) / totalSpan) * 100);
         const e = Math.min(100, ((vTo - minT) / totalSpan) * 100);
-        // Only restore zoom if actually zoomed in (not showing the full range)
         if (e - s < 99) {
-          start = s;
-          end = e;
+          dzPercentRef.current = { start: s, end: e };
+          // Defer zoom restore to the next animation frame so ECharts has fully
+          // processed the data setOption before we override the zoom window.
+          if (zoomRafRef.current != null) cancelAnimationFrame(zoomRafRef.current);
+          zoomRafRef.current = requestAnimationFrame(() => {
+            zoomRafRef.current = null;
+            if (!chartRef.current) return;
+            // Use absolute timestamps (startValue/endValue) for precision
+            chartRef.current.setOption(
+              {
+                dataZoom: [
+                  { startValue: vFrom, endValue: vTo },
+                  { startValue: vFrom, endValue: vTo },
+                ],
+              },
+              { notMerge: false },
+            );
+          });
         }
       }
-      chartRef.current.setOption(
-        {
-          dataZoom: [
-            { start, end },
-            { start, end },
-          ],
-        },
-        { notMerge: false, lazyUpdate: true },
-      );
-      dzPercentRef.current = { start, end };
     }
   }, [samples, labels, signal]);
 

@@ -133,6 +133,15 @@ export default function InspectPage() {
           (p) => {
             p.set('from', String(Math.round(zFrom)));
             p.set('to', String(Math.round(zTo)));
+            // Always ensure df/dt exist so shared URLs have a self-contained fetch window.
+            // If a preset already set them, leave them unchanged (they cover a wider range).
+            // If missing (fresh load with no preset click), compute a wider window from the
+            // zoomed range so user 2 fetches the correct historical data.
+            if (!p.has('df') || !p.has('dt')) {
+              const wider = computeFetchRange(zFrom, zTo);
+              p.set('df', String(wider.from));
+              p.set('dt', String(wider.to));
+            }
             return p;
           },
           { replace: true },

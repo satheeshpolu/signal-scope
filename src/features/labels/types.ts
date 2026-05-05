@@ -18,7 +18,7 @@ export interface Label {
 /** Colors map to CSS custom properties defined in tokens */
 export const CATEGORY_COLOR: Record<LabelCategory, string> = {
   rally: 'var(--color-success-500)',
-  selloff: 'var(--color-danger-500)',
+  selloff: 'var(--color-selloff-500)',
   consolidation: 'var(--color-warning-500)',
   breakout: 'var(--color-info-500)',
 };

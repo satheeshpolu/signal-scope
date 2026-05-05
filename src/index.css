@@ -34,6 +34,7 @@
   --color-danger-500: oklch(62% 0.22 25);
   --color-warning-500: oklch(72% 0.18 75);
   --color-info-500: oklch(65% 0.18 220);
+  --color-selloff-500: oklch(54% 0.24 18);
 
   /* ── Text ── */
   --color-text-primary: oklch(95% 0.005 250);
@@ -43,6 +44,7 @@
   /* ── Border ── */
   --color-border-default: oklch(22% 0.02 250);
   --color-border-subtle: oklch(18% 0.018 250);
+  --color-border-interactive: oklch(42% 0.022 250);
 
   /* ── Typography ── */
   --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -79,6 +81,7 @@
   /* Borders: light mode borders are subtle light-grays */
   --color-border-default: oklch(82% 0.012 250);
   --color-border-subtle: oklch(88% 0.009 250);
+  --color-border-interactive: oklch(65% 0.014 250);
 
   /* Lighter shadows for light surfaces */
   --shadow-popover: 0 8px 24px oklch(0% 0 0 / 0.14);
