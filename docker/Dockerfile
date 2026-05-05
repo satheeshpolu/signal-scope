@@ -1,8 +1,8 @@
 # ── base: install deps only (layer-cached until package.json changes) ──────────
 FROM node:24-alpine AS base
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install
 
 # ── dev: source is bind-mounted at runtime via compose ─────────────────────────
 FROM base AS dev
