@@ -1,3 +1,65 @@
+import type { Sample } from '@/features/samples/api/types';
+
+/**
+ * Largest-Triangle-Three-Buckets downsampler.
+ * Reduces `data` to at most `threshold` points while preserving visual shape.
+ * Always keeps the first and last points.
+ */
+export function lttb(
+  data: Sample[],
+  threshold: number,
+  valueKey: keyof Pick<Sample, 'close' | 'volume'>,
+): Sample[] {
+  const n = data.length;
+  if (n <= threshold) return data;
+
+  const sampled: Sample[] = [data[0]];
+  const bucketSize = (n - 2) / (threshold - 2);
+  let prevSelected = 0;
+
+  for (let i = 0; i < threshold - 2; i++) {
+    const currStart = Math.floor(i * bucketSize) + 1;
+    const currEnd = Math.min(Math.floor((i + 1) * bucketSize) + 1, n - 1);
+    const nextStart = currEnd;
+    const nextEnd = Math.min(Math.floor((i + 2) * bucketSize) + 1, n - 1);
+
+    // average point of the next bucket
+    let avgT = 0;
+    let avgV = 0;
+    const nextLen = nextEnd - nextStart;
+    for (let j = nextStart; j < nextEnd; j++) {
+      avgT += data[j].t;
+      avgV += data[j][valueKey];
+    }
+    if (nextLen > 0) {
+      avgT /= nextLen;
+      avgV /= nextLen;
+    }
+
+    const a = data[prevSelected];
+    let maxArea = -1;
+    let maxIdx = currStart;
+
+    for (let j = currStart; j < currEnd; j++) {
+      const area =
+        Math.abs(
+          (a.t - avgT) * (data[j][valueKey] - a[valueKey]) -
+            (a.t - data[j].t) * (avgV - a[valueKey]),
+        ) * 0.5;
+      if (area > maxArea) {
+        maxArea = area;
+        maxIdx = j;
+      }
+    }
+
+    sampled.push(data[maxIdx]);
+    prevSelected = maxIdx;
+  }
+
+  sampled.push(data[n - 1]);
+  return sampled;
+}
+
 export function formatMs(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, {
     month: 'short',
