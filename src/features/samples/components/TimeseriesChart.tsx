@@ -180,6 +180,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     startTime: 0,
     endTime: 0,
   });
+  const dzPercentRef = useRef({ start: 0, end: 100 });
   const [popover, setPopover] = useState<PopoverState>({
     visible: false,
     x: 0,
@@ -203,25 +204,35 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     });
     chartRef.current = chart;
 
-    // Zoom callback — notify parent to update URL
+    // Zoom callback — notify parent to update URL, dismiss any open label UI
     chart.on('dataZoom', (params: unknown) => {
       const ev = params as {
-        batch?: Array<{ startValue?: number; endValue?: number }>;
+        batch?: Array<{ start?: number; end?: number; startValue?: number; endValue?: number }>;
+        start?: number;
+        end?: number;
         startValue?: number;
         endValue?: number;
       };
       const entry = ev.batch?.[0] ?? ev;
+      if (entry.start != null && entry.end != null) {
+        dzPercentRef.current = { start: entry.start, end: entry.end };
+      }
       if (entry.startValue != null && entry.endValue != null && onZoom) {
         onZoom(entry.startValue, entry.endValue);
       }
+      setPopover((p) => ({ ...p, visible: false }));
+      setDragSelection(null);
     });
 
     // ZRender mouse events for label drag
     const zr = chart.getZr();
 
+    const inGrid = (x: number, y: number) => chart.containPixel('grid', [x, y]);
+
     zr.on('mousedown', (e: unknown) => {
       const ev = e as ZrEvent;
       if (ev.which !== undefined && ev.which !== 1) return;
+      if (!inGrid(ev.offsetX, ev.offsetY)) return;
       const dataCoord = chart.convertFromPixel({ gridIndex: 0 }, [ev.offsetX, ev.offsetY]);
       if (!Array.isArray(dataCoord) || dataCoord.length < 2) return;
       dragRef.current = {
@@ -235,8 +246,22 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     });
 
     zr.on('mousemove', (e: unknown) => {
-      if (!dragRef.current.active) return;
       const ev = e as ZrEvent;
+      if (!inGrid(ev.offsetX, ev.offsetY)) {
+        // Determine cursor based on whether mouse is over the filled selection or empty track
+        const canvas = containerRef.current?.querySelector('canvas');
+        if (canvas) {
+          const { start, end } = dzPercentRef.current;
+          const w = containerRef.current!.clientWidth;
+          const startPx = 60 + (start / 100) * (w - 60 - 16);
+          const endPx = 60 + (end / 100) * (w - 60 - 16);
+          const hasZoom = end - start < 99;
+          canvas.style.cursor =
+            hasZoom && ev.offsetX >= startPx && ev.offsetX <= endPx ? 'pointer' : 'crosshair';
+        }
+        if (!dragRef.current.active) return;
+      }
+      if (!dragRef.current.active) return;
       const dataCoord = chart.convertFromPixel({ gridIndex: 0 }, [ev.offsetX, ev.offsetY]);
       if (!Array.isArray(dataCoord) || dataCoord.length < 2) return;
       dragRef.current.endTime = dataCoord[0] as number;
@@ -245,13 +270,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
       const from = Math.min(dragRef.current.startTime, dragRef.current.endTime);
       const to = Math.max(dragRef.current.startTime, dragRef.current.endTime);
       setDragSelection({ x, width, from, to });
-      setPopover({
-        visible: false,
-        x: 0,
-        y: 0,
-        from,
-        to,
-      });
+      setPopover({ visible: false, x: 0, y: 0, from, to });
     });
 
     zr.on('mouseup', (e: unknown) => {
@@ -259,10 +278,9 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
       const ev = e as ZrEvent;
       dragRef.current.active = false;
       if (containerRef.current) containerRef.current.querySelector('canvas')!.style.cursor = '';
-      // setDragSelection(null);
 
       const dx = Math.abs(ev.offsetX - dragRef.current.startX);
-      if (dx < 8) return; // too small — ignore, treat as click
+      if (dx < 8) return;
 
       const from = Math.min(dragRef.current.startTime, dragRef.current.endTime);
       const to = Math.max(dragRef.current.startTime, dragRef.current.endTime);
