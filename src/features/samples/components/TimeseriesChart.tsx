@@ -193,11 +193,6 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     to: number;
   } | null>(null);
   const { add } = useLabelsStore();
-  // Keep a ref so the F5 handler always sees the latest popover state
-  const popoverRef = useRef(popover);
-  useEffect(() => {
-    popoverRef.current = popover;
-  }, [popover]);
 
   // Init chart once
   useEffect(() => {
@@ -314,20 +309,6 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     setDragSelection(null);
   }, []);
 
-  const popoverFormRef = useRef<HTMLFormElement>(null);
-
-  // F5 → submit the popover form (reads current note + category values)
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'F5') return;
-      e.preventDefault();
-      if (!popoverRef.current.visible) return;
-      popoverFormRef.current?.requestSubmit();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
-
   // Hide ECharts tooltip + crosshair while the label popover is open
   useEffect(() => {
     if (!chartRef.current) return;
@@ -352,7 +333,6 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
           initialFrom={popover.from}
           initialTo={popover.to}
           symbol={symbol}
-          formRef={popoverFormRef}
           onSave={handleSave}
           onClose={handleClose}
         />
