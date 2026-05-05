@@ -72,7 +72,7 @@ export function InstrumentsTable({ table, onInspect }: InstrumentsTableProps) {
                   variant="primary"
                   size="sm"
                   onClick={() => onInspect(row.original.symbol)}
-                  className="cursor-pointer text-gray-200"
+                  className="cursor-pointer"
                 >
                   Inspect →
                 </Button>

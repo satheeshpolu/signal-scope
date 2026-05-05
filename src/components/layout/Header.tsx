@@ -17,7 +17,7 @@ export function Header() {
             <h1 className="text-2xl font-bold leading-none tracking-tight text-text-primary">
               SignalScope
             </h1>
-            <p className="mt-0.5 text-md text-gray-500 ">Crypto signal inspection tool</p>
+            <p className="mt-0.5 text-md text-text-muted">Crypto signal inspection tool</p>
           </div>
         </Link>
 
