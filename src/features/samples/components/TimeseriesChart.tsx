@@ -439,6 +439,7 @@ export function TimeseriesChart({
           initialFrom={popover.from}
           initialTo={popover.to}
           symbol={symbol}
+          signal={signal}
           onSave={handleSave}
           onClose={handleClose}
         />

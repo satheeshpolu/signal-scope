@@ -13,6 +13,7 @@ import { useTheme } from '@/lib/theme/ThemeContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MS_30D, PRESETS } from '@/features/instruments/constants';
+import { isLabelVisibleForSignal } from '@/features/labels/types';
 
 const NOW = Date.now();
 
@@ -79,7 +80,9 @@ export default function InspectPage() {
   const labels = useLabelsStore((s) => s.labels);
   const { undo, redo } = useLabelsStore();
 
-  const symbolLabels = labels.filter((l) => l.symbol === symbol);
+  const symbolLabels = labels.filter(
+    (l) => l.symbol === symbol && isLabelVisibleForSignal(l, signal),
+  );
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -253,7 +256,7 @@ export default function InspectPage() {
         </main>
 
         {/* Label sidebar */}
-        <LabelSidebar symbol={symbol} />
+        <LabelSidebar symbol={symbol} signal={signal} />
       </div>
     </div>
   );

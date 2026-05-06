@@ -1,3 +1,5 @@
+import { SignalKind, type SignalKind as SignalKindType } from '@/features/signals/api/types';
+
 export const LabelCategory = {
   Rally: 'rally',
   Selloff: 'selloff',
@@ -9,10 +11,16 @@ export type LabelCategory = (typeof LabelCategory)[keyof typeof LabelCategory];
 export interface Label {
   id: string;
   symbol: string;
+  signal?: SignalKindType;
   from: number; // ms timestamp
   to: number; // ms timestamp
   category: LabelCategory;
   note: string;
+}
+
+export function isLabelVisibleForSignal(label: Label, signal: SignalKindType): boolean {
+  // Legacy persisted labels have no signal; treat them as close-price labels.
+  return (label.signal ?? SignalKind.Close) === signal;
 }
 
 /** Colors map to CSS custom properties defined in tokens */

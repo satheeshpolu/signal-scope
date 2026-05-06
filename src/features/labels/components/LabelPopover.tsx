@@ -1,5 +1,6 @@
 import { useRef, useEffect, type SubmitEvent } from 'react';
 import { LabelCategory, type Label, type PopoverPosition } from '@/features/labels/types';
+import type { SignalKind as SignalKindType } from '@/features/signals/api/types';
 import { Button } from '@/components/ui/Button';
 
 export interface LabelPopoverProps {
@@ -7,6 +8,7 @@ export interface LabelPopoverProps {
   initialFrom: number;
   initialTo: number;
   symbol: string;
+  signal: SignalKindType;
   editing?: Label;
   onSave: (data: Omit<Label, 'id'>) => void;
   onClose: () => void;
@@ -17,6 +19,7 @@ export function LabelPopover({
   initialFrom,
   initialTo,
   symbol,
+  signal,
   editing,
   onSave,
   onClose,
@@ -39,7 +42,7 @@ export function LabelPopover({
     const fd = new FormData(e.currentTarget);
     const category = fd.get('category') as LabelCategory;
     const note = (fd.get('note') as string).trim();
-    onSave({ symbol, from: initialFrom, to: initialTo, category, note });
+    onSave({ symbol, signal, from: initialFrom, to: initialTo, category, note });
   };
 
   return (

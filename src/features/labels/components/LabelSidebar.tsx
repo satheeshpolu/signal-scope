@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useLabelsStore } from '@/features/labels/store/labelsStore';
-import { LabelCategory, CATEGORY_COLOR, type Label } from '@/features/labels/types';
+import {
+  LabelCategory,
+  CATEGORY_COLOR,
+  isLabelVisibleForSignal,
+  type Label,
+} from '@/features/labels/types';
+import type { SignalKind as SignalKindType } from '@/features/signals/api/types';
 import { LabelPopover } from '@/features/labels/components/LabelPopover';
 import { Button } from '@/components/ui/Button';
 import { formatMs } from '@/features/samples/utils';
@@ -8,13 +14,16 @@ import { UndoIcon, RedoIcon, TrashIcon, PencilIcon } from '@/components/icons';
 
 export interface LabelSidebarProps {
   symbol: string;
+  signal: SignalKindType;
 }
 
-export function LabelSidebar({ symbol }: LabelSidebarProps) {
+export function LabelSidebar({ symbol, signal }: LabelSidebarProps) {
   const { labels, remove, update, undo, redo } = useLabelsStore();
   const [editing, setEditing] = useState<Label | null>(null);
 
-  const symbolLabels = labels.filter((l) => l.symbol === symbol);
+  const symbolLabels = labels.filter(
+    (l) => l.symbol === symbol && isLabelVisibleForSignal(l, signal),
+  );
 
   const handleUpdate = (data: Omit<Label, 'id'>) => {
     if (!editing) return;
@@ -112,6 +121,7 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
             initialFrom={editing.from}
             initialTo={editing.to}
             symbol={symbol}
+            signal={signal}
             editing={editing}
             onSave={handleUpdate}
             onClose={() => setEditing(null)}
