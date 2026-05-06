@@ -35,13 +35,8 @@ echarts.use([
   AxisPointerComponent,
   CanvasRenderer,
 ]);
-function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType): EChartsOption {
-  const isVolume = signal === SignalKind.Volume;
-
-  const seriesData = samples.map((s) => [s.t, isVolume ? s.volume : s.close]);
-  // ECharts MarkArea2DDataItemOption requires an exact [start, end] tuple.
-  // Using .map() + explicit return type forces TypeScript to see 2-tuples.
-  const markAreaData: [MarkBound, MarkBound][] = labels.map((label) => {
+function buildMarkAreaData(labels: Label[]): [MarkBound, MarkBound][] {
+  return labels.map((label) => {
     const bandColor = resolveCssVar(CATEGORY_COLOR[label.category]);
     return [
       {
@@ -56,16 +51,20 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         },
       },
       { xAxis: label.to },
-    ];
+    ] as [MarkBound, MarkBound];
   });
+}
 
+function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType): EChartsOption {
+  const isVolume = signal === SignalKind.Volume;
+  const seriesData = samples.map((s) => [s.t, isVolume ? s.volume : s.close]);
+  const markAreaData = buildMarkAreaData(labels);
   const textPrimary = getCssVar('--color-text-primary');
   const textMuted = getCssVar('--color-text-muted');
   const borderDefault = getCssVar('--color-border-default');
   const primary500 = getCssVar('--color-primary-500');
   const primary400 = getCssVar('--color-primary-400');
   const chartAxisLabelBg = getCssVar('--color-surface-600');
-  const chartAxisLabelText = getCssVar('--color-text-secondary');
   const chartTooltipBg = getCssVar('--color-surface-600');
 
   return {
@@ -102,33 +101,6 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
       borderColor: borderDefault,
       textStyle: { color: textPrimary, fontSize: 12 },
     },
-    dataZoom: [
-      {
-        type: 'inside',
-        xAxisIndex: 0,
-        filterMode: 'filter',
-        zoomOnMouseWheel: true,
-        moveOnMouseMove: false,
-      },
-      {
-        type: 'slider',
-        xAxisIndex: 0,
-        height: 28,
-        bottom: 12,
-        showDetail: false,
-        fillerColor: toRgba(primary500, 0.13),
-        borderColor: borderDefault,
-        handleStyle: { color: primary500 },
-        // textStyle: { color: textMuted, fontSize: 10 },
-        // labelFormatter text uses the dedicated axis-label token so it
-        // stays legible on both light and dark backgrounds.
-        dataBackground: {
-          lineStyle: { color: primary500 },
-          areaStyle: { color: toRgba(primary500, 0.09) },
-        },
-        textStyle: { color: chartAxisLabelText, fontSize: 10 },
-      },
-    ],
     series: isVolume
       ? [
           {
@@ -179,6 +151,8 @@ export function TimeseriesChart({
   symbol,
   viewFrom,
   viewTo,
+  focusRange,
+  zoomResetKey,
   onZoom,
 }: TimeseriesChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -190,6 +164,8 @@ export function TimeseriesChart({
     endTime: 0,
   });
   const dzPercentRef = useRef({ start: 0, end: 100 });
+  const suppressNextZoomRef = useRef(false);
+  const focusRangeRef = useRef<{ from: number; to: number } | null | undefined>(focusRange);
   const samplesRef = useRef(samples);
   useEffect(() => {
     samplesRef.current = samples;
@@ -231,6 +207,38 @@ export function TimeseriesChart({
     });
     chartRef.current = chart;
 
+    // Set dataZoom once — never included in buildOption so data/label updates
+    // can never accidentally reset the zoom position.
+    const primary500init = getCssVar('--color-primary-500');
+    const borderDefaultInit = getCssVar('--color-border-default');
+    const chartAxisLabelTextInit = getCssVar('--color-text-secondary');
+    chart.setOption({
+      dataZoom: [
+        {
+          type: 'inside',
+          xAxisIndex: 0,
+          filterMode: 'filter',
+          zoomOnMouseWheel: true,
+          moveOnMouseMove: false,
+        },
+        {
+          type: 'slider',
+          xAxisIndex: 0,
+          height: 28,
+          bottom: 12,
+          showDetail: false,
+          fillerColor: toRgba(primary500init, 0.13),
+          borderColor: borderDefaultInit,
+          handleStyle: { color: primary500init },
+          dataBackground: {
+            lineStyle: { color: primary500init },
+            areaStyle: { color: toRgba(primary500init, 0.09) },
+          },
+          textStyle: { color: chartAxisLabelTextInit, fontSize: 10 },
+        },
+      ],
+    });
+
     // Zoom callback — notify parent to update URL, dismiss any open label UI
     chart.on('dataZoom', (params: unknown) => {
       const ev = params as {
@@ -256,7 +264,13 @@ export function TimeseriesChart({
         }
       }
       if (startVal != null && endVal != null && onZoomRef.current) {
-        onZoomRef.current(startVal, endVal);
+        if (suppressNextZoomRef.current) {
+          suppressNextZoomRef.current = false;
+        } else {
+          // User manually zoomed — any active label focus is now stale.
+          focusRangeRef.current = null;
+          onZoomRef.current(startVal, endVal);
+        }
       }
       setPopover((p) => ({ ...p, visible: false }));
       setDragSelection(null);
@@ -356,16 +370,19 @@ export function TimeseriesChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update option when data changes; restore zoom when a new sample set arrives
+  // Effect 1: samples or signal changed — rebuild the full chart option and restore zoom.
+  // Labels are intentionally excluded from deps; label changes are handled by Effect 2.
+  const prevSignalRef = useRef<SignalKindType | null>(null);
+
   useEffect(() => {
     if (!chartRef.current) return;
     const samplesChanged = samples !== prevSamplesRef.current;
+    const signalChanged = signal !== prevSignalRef.current;
     prevSamplesRef.current = samples;
+    prevSignalRef.current = signal;
+    if (!samplesChanged && !signalChanged) return;
 
-    chartRef.current.setOption(buildOption(samples, labels, signal), {
-      notMerge: false,
-      lazyUpdate: true,
-    });
+    chartRef.current.setOption(buildOption(samples, labels, signal), { notMerge: false });
 
     if (samplesChanged && samples.length > 0) {
       const minT = samples[0].t;
@@ -378,13 +395,10 @@ export function TimeseriesChart({
         const e = Math.min(100, ((vTo - minT) / totalSpan) * 100);
         if (e - s < 99) {
           dzPercentRef.current = { start: s, end: e };
-          // Defer zoom restore to the next animation frame so ECharts has fully
-          // processed the data setOption before we override the zoom window.
           if (zoomRafRef.current != null) cancelAnimationFrame(zoomRafRef.current);
           zoomRafRef.current = requestAnimationFrame(() => {
             zoomRafRef.current = null;
             if (!chartRef.current) return;
-            // Use absolute timestamps (startValue/endValue) for precision
             chartRef.current.setOption(
               {
                 dataZoom: [
@@ -398,7 +412,72 @@ export function TimeseriesChart({
         }
       }
     }
-  }, [samples, labels, signal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [samples, signal]);
+
+  // Effect 2: labels changed — only update markArea overlays.
+  // On deletion always reset zoom to full view, regardless of how the user
+  // got to the current zoom level (label click OR manual zoom-in).
+  const prevLabelsLengthRef = useRef(labels.length);
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const wasDeleted = labels.length < prevLabelsLengthRef.current;
+    prevLabelsLengthRef.current = labels.length;
+
+    const markAreaData = buildMarkAreaData(labels);
+    const markArea = markAreaData.length > 0 ? { silent: true, data: markAreaData } : { data: [] };
+    chartRef.current.setOption({ series: [{ markArea }] }, { notMerge: false });
+
+    if (wasDeleted) {
+      focusRangeRef.current = null;
+      dzPercentRef.current = { start: 0, end: 100 };
+      // dispatchAction (not setOption) is the correct ECharts API for programmatic
+      // zoom changes. setOption only patches the merged option object; it doesn't
+      // override ECharts' internally tracked zoom position after user interaction,
+      // so the slider handles and chart area don't reliably update.
+      // dispatchAction goes through the action system → updates internal state →
+      // re-renders slider + chart → fires dataZoom event → handleZoom → URL update.
+      chartRef.current.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+    }
+  }, [labels]);
+
+  // Zoom to a focused label range when requested from the sidebar.
+  // Deps: focusRange only — using samplesRef avoids re-firing when TanStack Query
+  // returns a fresh array reference with identical data.
+  useEffect(() => {
+    if (!focusRange || !chartRef.current) return;
+    focusRangeRef.current = focusRange;
+    const s = samplesRef.current;
+    if (s.length === 0) return;
+    const minT = s[0].t;
+    const maxT = s[s.length - 1].t;
+    // focusRange already includes padding (computed in InspectPage)
+    const startValue = Math.max(minT, focusRange.from);
+    const endValue = Math.min(maxT, focusRange.to);
+    suppressNextZoomRef.current = true;
+    chartRef.current.setOption(
+      {
+        dataZoom: [
+          { startValue, endValue },
+          { startValue, endValue },
+        ],
+      },
+      { notMerge: false },
+    );
+    dzPercentRef.current = {
+      start: ((startValue - minT) / (maxT - minT)) * 100,
+      end: ((endValue - minT) / (maxT - minT)) * 100,
+    };
+  }, [focusRange]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset to 100% view when undo/redo is triggered from the parent
+  useEffect(() => {
+    if (zoomResetKey == null || zoomResetKey === 0 || !chartRef.current) return;
+    focusRangeRef.current = null;
+    dzPercentRef.current = { start: 0, end: 100 };
+    chartRef.current.dispatchAction({ type: 'dataZoom', start: 0, end: 100 });
+    // dispatchAction fires the dataZoom event → handleZoom → URL update.
+  }, [zoomResetKey]);
 
   const handleSave = useCallback(
     (data: Omit<Label, 'id'>) => {

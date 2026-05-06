@@ -8,14 +8,21 @@ import { UndoIcon, RedoIcon, TrashIcon, PencilIcon } from '@/components/icons';
 
 export interface LabelSidebarProps {
   symbol: string;
+  onLabelFocus?: (label: Label) => void;
+  onHistoryChange?: () => void;
 }
 
-export function LabelSidebar({ symbol }: LabelSidebarProps) {
+export function LabelSidebar({ symbol, onLabelFocus, onHistoryChange }: LabelSidebarProps) {
   const { labels, remove, update, undo, redo } = useLabelsStore();
   const [editing, setEditing] = useState<Label | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const symbolLabels = labels.filter((l) => l.symbol === symbol);
 
+  const handleFocus = (label: Label) => {
+    setActiveId(label.id);
+    onLabelFocus?.(label);
+  };
   const handleUpdate = (data: Omit<Label, 'id'>) => {
     if (!editing) return;
     update(editing.id, data);
@@ -34,7 +41,10 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
           <Button
             variant="primary"
             size="md"
-            onClick={undo}
+            onClick={() => {
+              undo();
+              onHistoryChange?.();
+            }}
             title="Undo (Ctrl+Z)"
             aria-label="Undo"
             className="text-text-primary cursor-pointer"
@@ -44,7 +54,10 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
           <Button
             variant="primary"
             size="md"
-            onClick={redo}
+            onClick={() => {
+              redo();
+              onHistoryChange?.();
+            }}
             title="Redo (Ctrl+Shift+Z)"
             aria-label="Redo"
             className="text-text-primary cursor-pointer"
@@ -63,7 +76,12 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
           {symbolLabels.map((label) => (
             <li
               key={label.id}
-              className="rounded-md border border-border-subtle bg-surface-800 p-3 pl-3.5"
+              onClick={() => handleFocus(label)}
+              className={`cursor-pointer rounded-md border bg-surface-800 p-3 pl-3.5 transition-colors ${
+                activeId === label.id
+                  ? 'border-border-interactive ring-1 ring-primary-400/40'
+                  : 'border-border-subtle'
+              }`}
               style={{ borderLeftColor: CATEGORY_COLOR[label.category], borderLeftWidth: '3px' }}
             >
               {/* Category chip */}
@@ -83,7 +101,10 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setEditing(label)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setEditing(label);
+                  }}
                   aria-label={`Edit label ${label.note || label.category}`}
                   className="w-7 cursor-pointer px-0"
                 >
@@ -92,7 +113,10 @@ export function LabelSidebar({ symbol }: LabelSidebarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => remove(label.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    remove(label.id);
+                  }}
                   aria-label={`Delete label ${label.note || label.category}`}
                   className="w-7 cursor-pointer px-0 text-danger-500 hover:text-danger-500"
                 >
