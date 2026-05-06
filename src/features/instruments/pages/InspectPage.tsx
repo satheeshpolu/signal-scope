@@ -114,7 +114,7 @@ export default function InspectPage() {
         return p;
       });
     },
-    [setSearchParams],
+    [setFetchRange, setSearchParams],
   );
 
   const handleSignalChange = useCallback(
