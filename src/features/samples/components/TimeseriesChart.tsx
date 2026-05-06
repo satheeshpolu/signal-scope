@@ -108,19 +108,17 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         xAxisIndex: 0,
         filterMode: 'filter',
         zoomOnMouseWheel: true,
-        moveOnMouseMove: true,
+        moveOnMouseMove: false,
       },
       {
         type: 'slider',
         xAxisIndex: 0,
         height: 28,
         bottom: 12,
+        showDetail: false,
         fillerColor: toRgba(primary500, 0.13),
         borderColor: borderDefault,
         handleStyle: { color: primary500 },
-        // textStyle: { color: textMuted, fontSize: 10 },
-        // labelFormatter text uses the dedicated axis-label token so it
-        // stays legible on both light and dark backgrounds.
         dataBackground: {
           lineStyle: { color: primary500 },
           areaStyle: { color: toRgba(primary500, 0.09) },
@@ -133,6 +131,7 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
           {
             type: isVolume ? 'bar' : 'line',
             data: seriesData,
+            barMaxWidth: 40,
             itemStyle: { color: primary500 },
             emphasis: {
               itemStyle: { color: primary400 },
@@ -170,7 +169,15 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
   };
 }
 
-export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: TimeseriesChartProps) {
+export function TimeseriesChart({
+  samples,
+  labels,
+  signal,
+  symbol,
+  viewFrom,
+  viewTo,
+  onZoom,
+}: TimeseriesChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<EChartsType | null>(null);
   const dragRef = useRef<DragState>({
@@ -179,6 +186,23 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     startTime: 0,
     endTime: 0,
   });
+  const dzPercentRef = useRef({ start: 0, end: 100 });
+  const samplesRef = useRef(samples);
+  useEffect(() => {
+    samplesRef.current = samples;
+  }, [samples]);
+  const onZoomRef = useRef(onZoom);
+  useEffect(() => {
+    onZoomRef.current = onZoom;
+  }, [onZoom]);
+  const viewFromRef = useRef(viewFrom);
+  useEffect(() => {
+    viewFromRef.current = viewFrom;
+  }, [viewFrom]);
+  const viewToRef = useRef(viewTo);
+  useEffect(() => {
+    viewToRef.current = viewTo;
+  }, [viewTo]);
   const [popover, setPopover] = useState<PopoverState>({
     visible: false,
     x: 0,
@@ -202,23 +226,46 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     });
     chartRef.current = chart;
 
-    // Zoom callback — notify parent to update URL
-    chart.on('dataZoom', () => {
-      const option = chart.getOption() as {
-        dataZoom?: Array<{ startValue?: number; endValue?: number }>;
+    // Zoom callback — notify parent to update URL, dismiss any open label UI
+    chart.on('dataZoom', (params: unknown) => {
+      const ev = params as {
+        batch?: Array<{ start?: number; end?: number; startValue?: number; endValue?: number }>;
+        start?: number;
+        end?: number;
+        startValue?: number;
+        endValue?: number;
       };
-      const dz = option.dataZoom?.[0];
-      if (dz?.startValue != null && dz?.endValue != null && onZoom) {
-        onZoom(dz.startValue, dz.endValue);
+      const entry = ev.batch?.[0] ?? ev;
+      if (entry.start != null && entry.end != null) {
+        dzPercentRef.current = { start: entry.start, end: entry.end };
       }
+      let startVal = entry.startValue;
+      let endVal = entry.endValue;
+      if ((startVal == null || endVal == null) && entry.start != null && entry.end != null) {
+        const s = samplesRef.current;
+        if (s.length > 0) {
+          const minT = s[0].t;
+          const maxT = s[s.length - 1].t;
+          startVal = minT + (entry.start / 100) * (maxT - minT);
+          endVal = minT + (entry.end / 100) * (maxT - minT);
+        }
+      }
+      if (startVal != null && endVal != null && onZoomRef.current) {
+        onZoomRef.current(startVal, endVal);
+      }
+      setPopover((p) => ({ ...p, visible: false }));
+      setDragSelection(null);
     });
 
     // ZRender mouse events for label drag
     const zr = chart.getZr();
 
+    const inGrid = (x: number, y: number) => chart.containPixel('grid', [x, y]);
+
     zr.on('mousedown', (e: unknown) => {
       const ev = e as ZrEvent;
       if (ev.which !== undefined && ev.which !== 1) return;
+      if (!inGrid(ev.offsetX, ev.offsetY)) return;
       const dataCoord = chart.convertFromPixel({ gridIndex: 0 }, [ev.offsetX, ev.offsetY]);
       if (!Array.isArray(dataCoord) || dataCoord.length < 2) return;
       dragRef.current = {
@@ -232,8 +279,30 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     });
 
     zr.on('mousemove', (e: unknown) => {
-      if (!dragRef.current.active) return;
       const ev = e as ZrEvent;
+      if (!inGrid(ev.offsetX, ev.offsetY)) {
+        // Determine cursor based on position within the slider bar
+        const canvas = containerRef.current?.querySelector('canvas');
+        if (canvas) {
+          const { start, end } = dzPercentRef.current;
+          const w = containerRef.current!.clientWidth;
+          const startPx = 60 + (start / 100) * (w - 60 - 16);
+          const endPx = 60 + (end / 100) * (w - 60 - 16);
+          const hasZoom = end - start < 99;
+          const handleHitArea = 6; // px tolerance around each handle
+          const nearStart = hasZoom && Math.abs(ev.offsetX - startPx) <= handleHitArea;
+          const nearEnd = hasZoom && Math.abs(ev.offsetX - endPx) <= handleHitArea;
+          if (nearStart || nearEnd) {
+            canvas.style.cursor = 'ew-resize';
+          } else if (hasZoom && ev.offsetX > startPx && ev.offsetX < endPx) {
+            canvas.style.cursor = 'grab';
+          } else {
+            canvas.style.cursor = 'default';
+          }
+        }
+        if (!dragRef.current.active) return;
+      }
+      if (!dragRef.current.active) return;
       const dataCoord = chart.convertFromPixel({ gridIndex: 0 }, [ev.offsetX, ev.offsetY]);
       if (!Array.isArray(dataCoord) || dataCoord.length < 2) return;
       dragRef.current.endTime = dataCoord[0] as number;
@@ -242,13 +311,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
       const from = Math.min(dragRef.current.startTime, dragRef.current.endTime);
       const to = Math.max(dragRef.current.startTime, dragRef.current.endTime);
       setDragSelection({ x, width, from, to });
-      setPopover({
-        visible: false,
-        x: 0,
-        y: 0,
-        from,
-        to,
-      });
+      setPopover({ visible: false, x: 0, y: 0, from, to });
     });
 
     zr.on('mouseup', (e: unknown) => {
@@ -256,10 +319,9 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
       const ev = e as ZrEvent;
       dragRef.current.active = false;
       if (containerRef.current) containerRef.current.querySelector('canvas')!.style.cursor = '';
-      // setDragSelection(null);
 
       const dx = Math.abs(ev.offsetX - dragRef.current.startX);
-      if (dx < 8) return; // too small — ignore, treat as click
+      if (dx < 8) return;
 
       const from = Math.min(dragRef.current.startTime, dragRef.current.endTime);
       const to = Math.max(dragRef.current.startTime, dragRef.current.endTime);
@@ -286,13 +348,33 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update option when data changes
+  // Update option when data/labels/signal changes.
+  // Zoom is applied in a second synchronous setOption so ECharts has already
+  // calculated the axis extent from the data before resolving startValue/endValue.
   useEffect(() => {
     if (!chartRef.current) return;
+
+    // Step 1: set data (no zoom override so existing zoom state is preserved on label-only updates)
     chartRef.current.setOption(buildOption(samples, labels, signal), {
       notMerge: false,
-      lazyUpdate: true,
+      lazyUpdate: false,
     });
+
+    // Step 2: apply the URL view window immediately after, so the slider
+    // is positioned correctly on initial load and URL-share navigations.
+    const vFrom = viewFromRef.current;
+    const vTo = viewToRef.current;
+    if (vFrom != null && vTo != null) {
+      chartRef.current.setOption(
+        {
+          dataZoom: [
+            { startValue: vFrom, endValue: vTo },
+            { startValue: vFrom, endValue: vTo },
+          ],
+        },
+        { notMerge: false },
+      );
+    }
   }, [samples, labels, signal]);
 
   const handleSave = useCallback(
@@ -334,6 +416,7 @@ export function TimeseriesChart({ samples, labels, signal, symbol, onZoom }: Tim
           initialFrom={popover.from}
           initialTo={popover.to}
           symbol={symbol}
+          signal={signal}
           onSave={handleSave}
           onClose={handleClose}
         />

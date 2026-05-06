@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useGetSamples } from '@/features/samples/hooks/useGetSamples';
 import { useGetSignals } from '@/features/signals/hooks/useGetSignals';
@@ -13,11 +13,27 @@ import { useTheme } from '@/lib/theme/ThemeContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MS_30D, PRESETS } from '@/features/instruments/constants';
+import { isLabelVisibleForSignal } from '@/features/labels/types';
 
 const NOW = Date.now();
 
 function defaultFrom() {
   return NOW - MS_30D;
+}
+
+/**
+ * Given the current view range (from URL), return a wider fetch window so the
+ * user can always zoom out after a reload. Picks the next larger preset that
+ * contains the view duration, centered on the view midpoint.
+ * Only used as a fallback when df/dt params are absent (e.g. old links).
+ */
+function computeFetchRange(urlFrom: number, urlTo: number): { from: number; to: number } {
+  const duration = urlTo - urlFrom;
+  const larger = PRESETS.find((p) => p.ms > duration);
+  if (!larger) return { from: urlFrom, to: urlTo };
+  // Anchor to NOW so the fetch window never extends into the future.
+  const clampedTo = Math.min(urlTo, Date.now());
+  return { from: clampedTo - larger.ms, to: clampedTo };
 }
 
 export default function InspectPage() {
@@ -29,6 +45,22 @@ export default function InspectPage() {
   const to = parseInt(searchParams.get('to') ?? String(NOW), 10);
   const backSearch = searchParams.get('back') ?? '';
 
+  // fetchRange drives the API call. Updated only by preset/signal changes,
+  // NOT by zoom — so zooming never triggers a refetch and the chart stays smooth.
+  // df/dt in the URL store the exact fetch window so reload restores the same data.
+  const [fetchRange, setFetchRange] = useState(() => {
+    const df = searchParams.get('df');
+    const dt = searchParams.get('dt');
+    if (df && dt) return { from: parseInt(df, 10), to: parseInt(dt, 10) };
+    // If from/to already align with a preset (fresh nav or preset URL without zoom),
+    // use them directly — no need to widen the window.
+    const duration = to - from;
+    const isPresetRange = PRESETS.some((p) => Math.abs(duration - p.ms) < 60_000 * 5);
+    if (isPresetRange) return { from, to };
+    return computeFetchRange(from, to);
+  });
+  const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { data: signals } = useGetSignals();
   const {
     data: samples,
@@ -39,8 +71,8 @@ export default function InspectPage() {
   } = useGetSamples({
     symbol: symbol ?? '',
     signal,
-    from,
-    to,
+    from: fetchRange.from,
+    to: fetchRange.to,
   });
 
   const { theme } = useTheme();
@@ -48,7 +80,9 @@ export default function InspectPage() {
   const labels = useLabelsStore((s) => s.labels);
   const { undo, redo } = useLabelsStore();
 
-  const symbolLabels = labels.filter((l) => l.symbol === symbol);
+  const symbolLabels = labels.filter(
+    (l) => l.symbol === symbol && isLabelVisibleForSignal(l, signal),
+  );
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -68,13 +102,19 @@ export default function InspectPage() {
   const setPreset = useCallback(
     (ms: number) => {
       const t = Date.now();
+      const newFrom = t - ms;
+      const newTo = t;
+      setFetchRange({ from: newFrom, to: newTo });
       setSearchParams((p) => {
-        p.set('from', String(t - ms));
-        p.set('to', String(t));
+        p.set('from', String(newFrom));
+        p.set('to', String(newTo));
+        // Store the fetch range so reload restores the exact same window
+        p.set('df', String(newFrom));
+        p.set('dt', String(newTo));
         return p;
       });
     },
-    [setSearchParams],
+    [setFetchRange, setSearchParams],
   );
 
   const handleSignalChange = useCallback(
@@ -89,16 +129,37 @@ export default function InspectPage() {
 
   const handleZoom = useCallback(
     (zFrom: number, zTo: number) => {
-      setSearchParams(
-        (p) => {
-          p.set('from', String(Math.round(zFrom)));
-          p.set('to', String(Math.round(zTo)));
-          return p;
-        },
-        { replace: true },
-      );
+      if (zTo - zFrom < 60_000) return;
+      if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+      zoomTimerRef.current = setTimeout(() => {
+        setSearchParams(
+          (p) => {
+            p.set('from', String(Math.round(zFrom)));
+            p.set('to', String(Math.round(zTo)));
+            // Always ensure df/dt exist so shared URLs have a self-contained fetch window.
+            // If a preset already set them, leave them unchanged (they cover a wider range).
+            // If missing (fresh load with no preset click), compute a wider window from the
+            // zoomed range so user 2 fetches the correct historical data.
+            if (!p.has('df') || !p.has('dt')) {
+              const wider = computeFetchRange(zFrom, zTo);
+              p.set('df', String(wider.from));
+              p.set('dt', String(wider.to));
+            }
+            return p;
+          },
+          { replace: true },
+        );
+      }, 200);
     },
     [setSearchParams],
+  );
+
+  // Clear pending zoom timer on unmount to avoid stale URL updates
+  useEffect(
+    () => () => {
+      if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+    },
+    [],
   );
 
   const backHref = `/${backSearch}`;
@@ -133,7 +194,7 @@ export default function InspectPage() {
         {/* Date-range presets */}
         <div className="flex gap-1" role="group" aria-label="Date range preset">
           {PRESETS.map((p) => {
-            const active = Math.abs(to - from - p.ms) < 60_000 * 5;
+            const active = Math.abs(fetchRange.to - fetchRange.from - p.ms) < 60_000 * 5;
             return (
               <Button
                 key={p.label}
@@ -187,13 +248,15 @@ export default function InspectPage() {
               signal={signal}
               symbol={symbol}
               theme={theme}
+              viewFrom={from}
+              viewTo={to}
               onZoom={handleZoom}
             />
           )}
         </main>
 
         {/* Label sidebar */}
-        <LabelSidebar symbol={symbol} />
+        <LabelSidebar symbol={symbol} signal={signal} />
       </div>
     </div>
   );

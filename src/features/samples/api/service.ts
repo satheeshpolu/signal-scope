@@ -1,6 +1,9 @@
 import { httpClient } from '@/lib/http/HttpClient';
 import type { ISamplesService } from '@/features/samples/api/interface';
 import type { KlineRaw, Sample, SampleParams } from '@/features/samples/api/types';
+import { lttb } from '@/features/samples/utils';
+
+const MAX_CHART_POINTS = 50_000;
 
 /** Picks the klines interval that fits the window within Binance's 1000-candle limit */
 function intervalForRange(fromMs: number, toMs: number): string {
@@ -39,7 +42,7 @@ class HttpSamplesService implements ISamplesService {
       endTime: params.to,
       limit: 1000,
     });
-    return raw.map(adaptKline);
+    return lttb(raw.map(adaptKline), MAX_CHART_POINTS, params.signal);
   }
 }
 

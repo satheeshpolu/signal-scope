@@ -19,7 +19,7 @@ const buttonVariants = cva(
         ],
         danger: ['bg-danger-500 text-text-primary', 'hover:brightness-110 active:brightness-90'],
         outline: [
-          'border border-border-default bg-transparent text-text-secondary',
+          'border border-border-interactive bg-transparent text-text-secondary',
           'hover:bg-surface-800 hover:text-text-primary',
         ],
       },
