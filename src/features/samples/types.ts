@@ -27,10 +27,6 @@ export interface TimeseriesChartProps {
   /** The current visible time window (from URL). Used to restore zoom on reload. */
   viewFrom?: number;
   viewTo?: number;
-  /** When set, the chart immediately zooms to this range (with padding). */
-  focusRange?: { from: number; to: number } | null;
-  /** Increment to trigger a full zoom-out reset (used after undo/redo). */
-  zoomResetKey?: number;
   onZoom?: (from: number, to: number) => void;
 }
 

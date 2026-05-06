@@ -13,7 +13,6 @@ import { useTheme } from '@/lib/theme/ThemeContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ChevronLeftIcon } from '@/components/icons';
 import { MS_30D, PRESETS } from '@/features/instruments/constants';
-import type { Label } from '@/features/labels/types';
 
 const NOW = Date.now();
 
@@ -60,34 +59,6 @@ export default function InspectPage() {
     return computeFetchRange(from, to);
   });
   const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [focusRange, setFocusRange] = useState<{ from: number; to: number } | null>(null);
-
-  const handleLabelFocus = useCallback(
-    (label: Label) => {
-      const pad = Math.round((label.to - label.from) * 0.3);
-      const viewFrom = label.from - pad;
-      const viewTo = label.to + pad;
-      setFocusRange({ from: viewFrom, to: viewTo });
-      // Update URL so the shared link opens the same centered view
-      setSearchParams(
-        (p) => {
-          p.set('from', String(viewFrom));
-          p.set('to', String(viewTo));
-          // Ensure df/dt cover the view window (use existing fetch range if wider)
-          const df = p.get('df');
-          const dt = p.get('dt');
-          if (!df || !dt || parseInt(df, 10) > viewFrom || parseInt(dt, 10) < viewTo) {
-            const wider = computeFetchRange(viewFrom, viewTo);
-            p.set('df', String(wider.from));
-            p.set('dt', String(wider.to));
-          }
-          return p;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
-  );
 
   const { data: signals } = useGetSignals();
   const {
@@ -110,9 +81,6 @@ export default function InspectPage() {
 
   const symbolLabels = labels.filter((l) => l.symbol === symbol);
 
-  const [zoomResetKey, setZoomResetKey] = useState(0);
-  const handleHistoryChange = useCallback(() => setZoomResetKey((k) => k + 1), []);
-
   // Global keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -123,11 +91,10 @@ export default function InspectPage() {
       } else {
         undo();
       }
-      handleHistoryChange();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [undo, redo, handleHistoryChange]);
+  }, [undo, redo]);
 
   const setPreset = useCallback(
     (ms: number) => {
@@ -160,9 +127,6 @@ export default function InspectPage() {
   const handleZoom = useCallback(
     (zFrom: number, zTo: number) => {
       if (zTo - zFrom < 60_000) return;
-      // Clear any active label focus so stale focusRange can't re-zoom the chart
-      // when samples change (e.g. preset switch triggers a refetch).
-      setFocusRange(null);
       if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
       zoomTimerRef.current = setTimeout(() => {
         setSearchParams(
@@ -184,7 +148,7 @@ export default function InspectPage() {
         );
       }, 200);
     },
-    [setSearchParams, setFocusRange],
+    [setSearchParams],
   );
 
   // Clear pending zoom timer on unmount to avoid stale URL updates
@@ -283,19 +247,13 @@ export default function InspectPage() {
               theme={theme}
               viewFrom={from}
               viewTo={to}
-              focusRange={focusRange}
-              zoomResetKey={zoomResetKey}
               onZoom={handleZoom}
             />
           )}
         </main>
 
         {/* Label sidebar */}
-        <LabelSidebar
-          symbol={symbol}
-          onLabelFocus={handleLabelFocus}
-          onHistoryChange={handleHistoryChange}
-        />
+        <LabelSidebar symbol={symbol} />
       </div>
     </div>
   );
