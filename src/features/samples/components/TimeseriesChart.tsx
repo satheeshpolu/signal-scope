@@ -119,9 +119,6 @@ function buildOption(samples: Sample[], labels: Label[], signal: SignalKindType)
         fillerColor: toRgba(primary500, 0.13),
         borderColor: borderDefault,
         handleStyle: { color: primary500 },
-        // textStyle: { color: textMuted, fontSize: 10 },
-        // labelFormatter text uses the dedicated axis-label token so it
-        // stays legible on both light and dark backgrounds.
         dataBackground: {
           lineStyle: { color: primary500 },
           areaStyle: { color: toRgba(primary500, 0.09) },
@@ -206,8 +203,6 @@ export function TimeseriesChart({
   useEffect(() => {
     viewToRef.current = viewTo;
   }, [viewTo]);
-  const prevSamplesRef = useRef<typeof samples | null>(null);
-  const zoomRafRef = useRef<number | null>(null);
   const [popover, setPopover] = useState<PopoverState>({
     visible: false,
     x: 0,
@@ -349,54 +344,36 @@ export function TimeseriesChart({
       ro.disconnect();
       chart.dispose();
       chartRef.current = null;
-      // Reset so zoom restores correctly on remount (React StrictMode & HMR)
-      prevSamplesRef.current = null;
-      if (zoomRafRef.current != null) cancelAnimationFrame(zoomRafRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update option when data changes; restore zoom when a new sample set arrives
+  // Update option when data/labels/signal changes.
+  // Zoom is applied in a second synchronous setOption so ECharts has already
+  // calculated the axis extent from the data before resolving startValue/endValue.
   useEffect(() => {
     if (!chartRef.current) return;
-    const samplesChanged = samples !== prevSamplesRef.current;
-    prevSamplesRef.current = samples;
 
+    // Step 1: set data (no zoom override so existing zoom state is preserved on label-only updates)
     chartRef.current.setOption(buildOption(samples, labels, signal), {
       notMerge: false,
-      lazyUpdate: true,
+      lazyUpdate: false,
     });
 
-    if (samplesChanged && samples.length > 0) {
-      const minT = samples[0].t;
-      const maxT = samples[samples.length - 1].t;
-      const totalSpan = maxT - minT;
-      const vFrom = viewFromRef.current;
-      const vTo = viewToRef.current;
-      if (totalSpan > 0 && vFrom != null && vTo != null) {
-        const s = Math.max(0, ((vFrom - minT) / totalSpan) * 100);
-        const e = Math.min(100, ((vTo - minT) / totalSpan) * 100);
-        if (e - s < 99) {
-          dzPercentRef.current = { start: s, end: e };
-          // Defer zoom restore to the next animation frame so ECharts has fully
-          // processed the data setOption before we override the zoom window.
-          if (zoomRafRef.current != null) cancelAnimationFrame(zoomRafRef.current);
-          zoomRafRef.current = requestAnimationFrame(() => {
-            zoomRafRef.current = null;
-            if (!chartRef.current) return;
-            // Use absolute timestamps (startValue/endValue) for precision
-            chartRef.current.setOption(
-              {
-                dataZoom: [
-                  { startValue: vFrom, endValue: vTo },
-                  { startValue: vFrom, endValue: vTo },
-                ],
-              },
-              { notMerge: false },
-            );
-          });
-        }
-      }
+    // Step 2: apply the URL view window immediately after, so the slider
+    // is positioned correctly on initial load and URL-share navigations.
+    const vFrom = viewFromRef.current;
+    const vTo = viewToRef.current;
+    if (vFrom != null && vTo != null) {
+      chartRef.current.setOption(
+        {
+          dataZoom: [
+            { startValue: vFrom, endValue: vTo },
+            { startValue: vFrom, endValue: vTo },
+          ],
+        },
+        { notMerge: false },
+      );
     }
   }, [samples, labels, signal]);
 
